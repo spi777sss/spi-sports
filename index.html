@@ -552,7 +552,7 @@ table.tb{width:100%;border-collapse:collapse;font-size:13px}
 </head>
 <body>
 <header class="top"><div class="top-in">
-  <div class="brand"><span class="brand-mark" aria-hidden="true">SPI</span><span class="brand-word">Sports</span></div>
+  <button class="brand press" data-act="brand" aria-label="SPI Sports, ir al inicio"><span class="brand-mark" aria-hidden="true">SPI</span><span class="brand-word" aria-hidden="true">Sports</span></button>
   <span class="livepill" id="livepill" hidden><span class="dot pulse"></span><span id="livecount"></span></span>
   <div class="search" id="searchbox">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -1447,6 +1447,7 @@ document.addEventListener('click',e=>{
   switch(act){
     case 'sport':S.dateT=Date.now();S.sport=id;store.set('spi.sport',id);S.view={type:'matches'};S.match=null;S.dtab='sum';renderAll(true);break;
     case 'home':go({type:'matches'});break;
+    case 'brand':S.dateT=Date.now();S.date=today();S.filter='all';if(wide())S.match=null;go({type:'matches'});break;
     case 'leagues':go({type:'leagues'});break;
     case 'newsview':go({type:'news'});break;
     case 'nsrc':S.view.src=id;renderMain(true);break;
