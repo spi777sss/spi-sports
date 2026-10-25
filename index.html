@@ -439,6 +439,32 @@ table.tb{width:100%;border-collapse:collapse;font-size:13px}
 .foot{font-size:12px;color:var(--faint);padding:8px 4px;line-height:1.5}
 .err{padding:22px;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:10px;align-items:center}
 
+/* notificaciones */
+.bell{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--muted);padding:4px 10px;border-radius:99px;border:1px solid var(--line)}
+.bell[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.bell.ring svg{animation:ring .5s var(--ease-out);transform-origin:50% 10%}
+@keyframes ring{0%{transform:rotate(0)}25%{transform:rotate(14deg)}55%{transform:rotate(-10deg)}80%{transform:rotate(5deg)}100%{transform:rotate(0)}}
+.ncard{padding:16px;display:flex;flex-direction:column;gap:12px}
+.nstat{display:flex;align-items:flex-start;gap:12px}
+.nstat .ic{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-2)}
+.nstat .ic.off{background:var(--surface-3);color:var(--faint)}
+.nstat .tx{flex:1;min-width:0}
+.nstat .tx b{display:block;font-size:15px}
+.nstat .tx span{color:var(--muted);font-size:13px}
+.nactions{display:flex;gap:8px;flex-wrap:wrap}
+.nteam{display:flex;flex-direction:column;gap:9px;padding:12px 0;border-top:1px solid var(--line-2)}
+.nteam .nh{display:flex;align-items:center;gap:10px;min-width:0}
+.nteam .nh b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ntypes{display:flex;gap:6px;flex-wrap:wrap}
+.ntype{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:99px;border:1px solid var(--line);font-size:12.5px;font-weight:700;color:var(--muted)}
+.ntype[aria-pressed="true"]{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 60%,transparent);color:var(--fg)}
+.ntype .tick{width:14px;height:14px;border-radius:50%;border:1.5px solid currentColor;display:grid;place-items:center;opacity:.6}
+.ntype[aria-pressed="true"] .tick{background:var(--accent);border-color:var(--accent);color:#fff;opacity:1}
+.npanel{margin:0 18px 18px;padding:14px;border-radius:14px;background:var(--surface-2);border:1px solid var(--line);display:flex;flex-direction:column;gap:10px;animation:rise .22s var(--ease-out)}
+.npanel .k{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.toast{position:fixed;left:50%;bottom:calc(var(--tabbar) + 16px + env(safe-area-inset-bottom,0px));z-index:80;max-width:min(420px,calc(100% - 32px));padding:12px 16px;border-radius:14px;background:var(--fg);color:var(--bg);font-weight:700;font-size:13.5px;box-shadow:var(--shadow);transform:translate(-50%,0);opacity:1;transition:transform .3s var(--ease-drawer),opacity .2s ease}
+.toast[hidden]{display:block!important;transform:translate(-50%,calc(100% + 40px));opacity:0;pointer-events:none}
+
 /* barra inferior (teléfono) */
 .tabbar{display:none}
 
@@ -522,6 +548,7 @@ table.tb{width:100%;border-collapse:collapse;font-size:13px}
 </div>
 <div class="scrim" id="scrim" data-act="close"></div>
 <nav class="tabbar" id="tabbar" aria-label="Secciones"></nav>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script>
 /* ================= utilidades ================= */
@@ -1205,7 +1232,8 @@ function viewTeam(anim){
   const lg=LG[S.view.lg||t.lg]||LG[t.lg];
   const sc=need(URL.sched(lg,t.id),120000);const fx=lg.sp==='soccer'?need(URL.sched(lg,t.id,true),300000):null;const ro=need(URL.roster(lg,t.id),3600000);need(URL.std(lg),600000);
   const me=teamEntry(lg.id,t.id);
-  let h=`<div class="panel"><div class="vhead">${logo(t,68)}<div class="vt"><h1>${esc(t.name)}</h1><div class="vs"><button class="lnk" data-act="league" data-id="${lg.id}">${lg.name}</button>${me?(lg.sp==='soccer'?` · ${me.pos}º con ${me.st.points} puntos`:` · ${me.st.wins}-${me.st.losses} · ${me.pos}º de su conferencia`):''}</div></div>${favBtn(t)}</div></div>`;
+  let h=`<div class="panel"><div class="vhead">${logo(t,68)}<div class="vt"><h1>${esc(t.name)}</h1><div class="vs"><button class="lnk" data-act="league" data-id="${lg.id}">${lg.name}</button>${me?(lg.sp==='soccer'?` · ${me.pos}º con ${me.st.points} puntos`:` · ${me.st.wins}-${me.st.losses} · ${me.pos}º de su conferencia`):''}</div></div><span style="display:flex;gap:8px;flex-wrap:wrap">${bellBtn(t)}${favBtn(t)}</span></div>
+  ${S.nOpen===t.k?`<div class="npanel"><span class="k">Avísame de</span>${typeChips(t.k,t.sp)}<span class="sub">${pushBlocker()||'Llegan aunque la app esté cerrada. Puedes cambiarlo cuando quieras en Mis equipos.'}</span></div>`:''}</div>`;
   const evs=[...(sc.data?.events||[]),...(fx?.data?.events||[])];const seen=new Set();
   const ms=evs.filter(e=>!seen.has(e.id)&&seen.add(e.id)).map(e=>norm(e,lg)).sort((a,b)=>a.ko-b.ko);
   const past=ms.filter(m=>m.st==='ft');const next=ms.filter(m=>m.st!=='ft').slice(0,6);
@@ -1213,7 +1241,7 @@ function viewTeam(anim){
   const form=past.map(res).filter(Boolean);
   if(!sc.data&&!sc.err)h+=`<div class="vbody">${skelBlock(90)}</div>`;
   else if(me){const s=me.st;
-    h+=lg.sp==='soccer'?`<div class="tiles ${anim?'enter':''}"><div class="tile"><div class="tv">${s.wins}<small>·</small>${s.ties}<small>·</small>${s.losses}</div><div class="tl2">Victorias · empates · derrotas</div></div><div class="tile"><div class="tv">${s.pointsFor}<small> / ${s.pointsAgainst}</small></div><div class="tl2">Goles a favor / en contra</div></div><div class="tile"><div class="tv">${s.gamesPlayed?(s.points/s.gamesPlayed).toFixed(2):'–'}</div><div class="tl2">Puntos por partido</div></div><div class="tile"><div class="tv">${s.gamesPlayed?Math.round(s.wins/s.gamesPlayed*100):0}<small>%</small></div><div class="tl2">Victorias</div></div></div>`
+    h+=lg.sp==='soccer'?`<div class="tiles ${anim?'enter':''}"><div class="tile"><div class="tv">${s.wins}<small> · </small>${s.ties}<small> · </small>${s.losses}</div><div class="tl2">Victorias · empates · derrotas</div></div><div class="tile"><div class="tv">${s.pointsFor}<small> / ${s.pointsAgainst}</small></div><div class="tl2">Goles a favor / en contra</div></div><div class="tile"><div class="tv">${s.gamesPlayed?(s.points/s.gamesPlayed).toFixed(2):'–'}</div><div class="tl2">Puntos por partido</div></div><div class="tile"><div class="tv">${s.gamesPlayed?Math.round(s.wins/s.gamesPlayed*100):0}<small>%</small></div><div class="tl2">Victorias</div></div></div>`
       :`<div class="tiles ${anim?'enter':''}"><div class="tile"><div class="tv">${s.wins}<small>-</small>${s.losses}</div><div class="tl2">Balance</div></div><div class="tile"><div class="tv">${s.avgPointsFor_d||'–'}</div><div class="tl2">Puntos por partido</div></div><div class="tile"><div class="tv">${s.avgPointsAgainst_d||'–'}</div><div class="tl2">Puntos recibidos</div></div><div class="tile"><div class="tv">${s.streak_d||'–'}</div><div class="tl2">Racha · últimos 10: ${esc(s.lasttengames_t||s['Last Ten Games_d']||'–')}</div></div></div>`;
   }
   if(past.length>=2){let acc=0;const vals=past.map(m=>{const r=res(m);if(lg.sp==='soccer')acc+=r==='W'?3:r==='D'?1:0;else acc+=r==='W'?1:-1;return acc});
@@ -1231,12 +1259,76 @@ function viewTeam(anim){
   return h;
 }
 
+/* ================= notificaciones push ================= */
+// El servidor (Cloudflare Worker, carpeta push-worker) revisa los partidos cada minuto y envía los avisos.
+const PUSH_API='https://spi-push.spi-push.workers.dev';
+const VAPID_PUBLIC='BPdU_UpW8jEBKI_xuDHE3U6K4cdlyKNWkpfx1HoUuxAJmodl9R8zALrCjdtKN2evU2gUlgjVlzCNBMj5ch7HPjA';
+const NTYPES={soccer:[['start','Inicio'],['goal','Goles'],['red','Tarjetas rojas'],['ht','Descanso'],['ft','Final']],basketball:[['start','Inicio'],['quarter','Fin de cada cuarto'],['clutch','Final ajustado'],['ft','Final']]};
+const NDEF={soccer:['start','goal','red','ft'],basketball:['start','clutch','ft']};
+S.notif=store.get('spi.notif',{});
+const saveNotif=()=>store.set('spi.notif',S.notif);
+const ios=()=>/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const standalone=()=>navigator.standalone===true||matchMedia('(display-mode: standalone)').matches;
+const pushSupported=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window&&location.protocol==='https:';
+function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>{t.hidden=true},3600)}
+const b64u=s=>{const p='='.repeat((4-s.length%4)%4);const b=atob((s+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(b,c=>c.charCodeAt(0))};
+function pushBlocker(){
+  if(!PUSH_API)return'El servidor de avisos todavía no está conectado.';
+  if(ios()&&!standalone())return'En el iPhone, los avisos funcionan con SPI Sports instalada: Safari → Compartir → «Añadir a pantalla de inicio», y ábrela desde su ícono (iOS 16.4 o posterior).';
+  if(!pushSupported())return'Este navegador no admite notificaciones push.';
+  if(Notification.permission==='denied')return ios()?'Bloqueaste los avisos. Actívalos en Ajustes → Notificaciones → SPI Sports.':'Bloqueaste los avisos para esta web. Permítelos en los ajustes del navegador.';
+  return'';
+}
+async function currentSub(){if(!pushSupported())return null;const reg=await navigator.serviceWorker.ready;return reg.pushManager.getSubscription()}
+async function postPush(path,body){const r=await fetch(PUSH_API+path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'HTTP '+r.status);return j}
+const teamsPayload=()=>Object.fromEntries(Object.entries(S.notif).map(([k,v])=>[k,{lg:v.lg,name:v.name,types:v.types}]));
+// pide permiso (debe llamarse directamente desde un toque), se suscribe y sube las preferencias
+async function enablePush(){
+  const block=pushBlocker();if(block){toast(block);return false}
+  const perm=Notification.permission==='granted'?'granted':await Notification.requestPermission();
+  if(perm!=='granted'){toast('Sin permiso no podemos enviarte avisos.');renderMain(false);return false}
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID_PUBLIC)});
+    await postPush('/subscribe',{subscription:sub.toJSON(),teams:teamsPayload()});
+    store.set('spi.pushOn',true);renderMain(false);return true;
+  }catch(e){toast('No se pudieron activar los avisos: '+e.message);return false}
+}
+let syncT;
+function syncPush(){clearTimeout(syncT);syncT=setTimeout(async()=>{try{const sub=await currentSub();if(!sub||!PUSH_API)return;
+  if(!Object.keys(S.notif).length){await postPush('/unsubscribe',{endpoint:sub.endpoint});}else await postPush('/subscribe',{subscription:sub.toJSON(),teams:teamsPayload()})}catch(e){toast('No se pudieron guardar tus avisos: '+e.message)}},500)}
+function setTypes(k,types){
+  const t=TEAMS.get(k)||S.favs.get(k)||S.notif[k];if(!t)return;
+  if(!types.length)delete S.notif[k];else S.notif[k]={lg:LG[t.lg]?.cup?(S.notif[k]?.lg||t.lg):t.lg,sp:t.sp,name:t.name,short:t.short,logo:t.logo,id:t.id,types};
+  saveNotif();
+}
+function onNotifChange(){
+  if(Object.keys(S.notif).length&&!store.get('spi.pushOn',false)){enablePush();return}
+  syncPush();
+}
+const ICONB={bell:(on,s=14)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${on?'currentColor':'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`};
+const bellBtn=t=>{const on=!!S.notif[t.k];return `<button class="bell press" data-act="nbell" data-k="${esc(t.k)}" aria-pressed="${on}" aria-label="Avisos de ${esc(t.name)}">${ICONB.bell(on)}${on?'Avisos activos':'Avisos'}</button>`};
+function typeChips(k,sp){const cur=S.notif[k]?.types||[];return `<div class="ntypes">${NTYPES[sp].map(([id,l])=>`<button class="ntype press" data-act="ntype" data-k="${esc(k)}" data-t="${id}" aria-pressed="${cur.includes(id)}"><span class="tick">${cur.includes(id)?ICON.check:''}</span>${l}</button>`).join('')}</div>`}
+function notifCard(){
+  const block=pushBlocker();const on=store.get('spi.pushOn',false)&&!block&&Notification.permission==='granted';
+  const teams=Object.entries(S.notif);
+  const extra=[...S.favs.values()].filter(t=>!S.notif[t.k]);
+  return `<div class="panel ncard"><div class="nstat"><span class="ic ${on?'':'off'}">${ICONB.bell(on,20)}</span><div class="tx"><b>${on?'Notificaciones activadas':'Notificaciones'}</b><span>${block||(on?`Recibirás avisos de ${teams.length} equipo${teams.length===1?'':'s'}, aunque la app esté cerrada.`:'Elige equipos y qué quieres que te avisemos: goles, tarjetas rojas, inicio, descanso o final.')}</span></div></div>
+   ${!block?`<div class="nactions">${on?`<button class="btn ghost press" data-act="ntest">Enviar aviso de prueba</button>`:teams.length?`<button class="btn press" data-act="nenable">Activar notificaciones</button>`:''}</div>`:''}
+   ${teams.map(([k,v])=>`<div class="nteam"><div class="nh">${logo(v,24)}<b>${esc(v.name)}</b><button class="sub press" data-act="noff" data-k="${esc(k)}">Quitar</button></div>${typeChips(k,v.sp)}</div>`).join('')}
+   ${extra.length?`<div class="nteam"><div class="nh"><b style="color:var(--muted);font-weight:700">Tus favoritos sin avisos</b></div><div class="ntypes">${extra.map(t=>`<button class="ntype press" data-act="nbell" data-k="${esc(t.k)}">${logo(t,16)}${esc(t.name)}</button>`).join('')}</div></div>`:''}
+   ${!teams.length&&!extra.length?`<p class="sub" style="margin:0">Sigue a un equipo o toca la campana en su ficha para elegir avisos.</p>`:''}</div>`;
+}
+
 /* ================= favoritos ================= */
 function viewFav(anim){
   const lgId=S.view.lg||'esp.1';const lg=LG[lgId];const c=need(URL.std(lg),600000);
   const favs=[...S.favs.values()];
   let h=`<div class="panel"><div class="vhead"><div class="vt"><h1>Mis equipos</h1><div class="vs">Sus partidos salen primero y con estrella. Se guardan en este dispositivo.</div></div>${S.favs.size?`<button class="btn press" data-act="home">Ver partidos</button>`:''}</div>
-  ${favs.length?`<div class="vbody" style="padding-top:0"><div class="chips">${favs.map(t=>`<button class="chip press" data-act="team" data-k="${esc(t.k)}">${logo(t,18)}${esc(t.name)}</button>`).join('')}</div></div>`:''}
+  ${favs.length?`<div class="vbody" style="padding-top:0"><div class="chips">${favs.map(t=>`<button class="chip press" data-act="team" data-k="${esc(t.k)}">${logo(t,18)}${esc(t.name)}</button>`).join('')}</div></div>`:''}</div>
+  ${notifCard()}
+  <div class="panel">
   <nav class="vtabs" role="tablist" data-ind="flg"><span class="ind"></span>${LEAGUES.map(l=>{const n=favs.filter(f=>f.lg===l.id).length;return `<button role="tab" data-act="flg" data-id="${l.id}" aria-selected="${lgId===l.id}">${l.name}${n?` <span class="sub">(${n})</span>`:''}</button>`}).join('')}</nav>
   <div class="vbody">`;
   if(!c.data)h+=c.err?errBox(c.err,URL.std(lg)):skelBlock(300);
@@ -1307,6 +1399,15 @@ document.addEventListener('click',e=>{
     case 'fav':{const k=b.dataset.k;const t=TEAMS.get(k);if(S.favs.has(k))S.favs.delete(k);else if(t)S.favs.set(k,{k,name:t.name,short:t.short,logo:t.logo,lg:t.lg,sp:t.sp,id:t.id});saveFavs();
       renderHead();renderSide();renderTabbar();renderMain(false);renderDetail(false);if(!$('#sres').hidden)renderSearch();
       document.querySelectorAll(`[data-act="fav"][data-k="${CSS.escape(k)}"]`).forEach(x=>x.classList.add('popped'));break}
+    case 'nbell':{const k=b.dataset.k;const t=TEAMS.get(k)||S.favs.get(k)||S.notif[k];if(!t)break;
+      if(S.view.type==='team'&&S.nOpen!==k&&S.notif[k]){S.nOpen=k;renderMain(false);break}
+      if(!S.notif[k]){setTypes(k,NDEF[t.sp]);S.nOpen=k;renderMain(false);document.querySelectorAll(`[data-act="nbell"][data-k="${CSS.escape(k)}"]`).forEach(x=>x.classList.add('ring'));onNotifChange();toast('Avisos activados para '+t.name)}
+      else{S.nOpen=S.nOpen===k?null:k;renderMain(false)}
+      break}
+    case 'ntype':{const k=b.dataset.k,ty=b.dataset.t;const cur=(S.notif[k]?.types||[]).slice();const i=cur.indexOf(ty);i>=0?cur.splice(i,1):cur.push(ty);setTypes(k,cur);renderMain(false);onNotifChange();break}
+    case 'noff':{delete S.notif[b.dataset.k];saveNotif();renderMain(false);syncPush();break}
+    case 'nenable':enablePush();break;
+    case 'ntest':currentSub().then(sub=>sub?postPush('/test',{endpoint:sub.endpoint}):Promise.reject(new Error('dispositivo sin suscripción'))).then(r=>toast(r.ok?'Aviso de prueba enviado':'No se pudo enviar: '+(r.error||r.status))).catch(e=>toast('No se pudo enviar: '+e.message));break;
     case 'retry':{const u=b.dataset.u;if(u)C.delete(u);renderAll(false);break}
   }
 });
@@ -1348,6 +1449,9 @@ document.addEventListener('click',e=>{if(!e.target.closest('.search'))$('#sres')
   d.addEventListener('pointerup',end);d.addEventListener('pointercancel',end);
 })();
 
+// abrir un partido desde una notificación (?m=liga|id)
+(function(){const q=new URLSearchParams(location.search).get('m');if(!q)return;const[lg,id]=q.split('|');if(!LG[lg]||!/^\d+$/.test(id))return;
+  if(LG[lg].sp!==S.sport){S.sport=LG[lg].sp}S.match={id,lg};history.replaceState(null,'',location.pathname);setTimeout(openDetail,50)})();
 renderAll(true);
 setInterval(()=>{if(document.hidden)return;renderAll(false);if(!S.match)autoSelect()},30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)renderAll(false)});
