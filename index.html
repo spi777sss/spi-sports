@@ -8,6 +8,7 @@
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0e14">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
 <meta name="color-scheme" content="dark light">
+<meta name="spi-build" content="2026-10-25.3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SPI Sports">
@@ -29,6 +30,7 @@
   --accent:#4f7dff; --accent-2:#7b9cff; --accent-soft:rgba(79,125,255,.15); --on-accent:#fff;
   --live:#ff3d5a; --live-soft:rgba(255,61,90,.14);
   --up:#2fd179; --down:#ff5a5a; --amber:#f6b73c;
+  --z-ucl:#4f7dff; --z-uclq:#8fb0ff; --z-uel:#f08c2a; --z-uecl:#22c3a6; --z-relpo:#ff8a5c; --z-rel:#ff4d5e;
   --win:#2fd179; --draw:#8b95a6; --loss:#ff5a5a;
   --pitch:#16502d; --pitch-2:#145029; --pitch-line:rgba(255,255,255,.28);
   --skel:#161b25; --skel-hi:#212837;
@@ -51,6 +53,7 @@
   --accent:#2b56f0; --accent-2:#2b56f0; --accent-soft:rgba(43,86,240,.1); --on-accent:#fff;
   --live:#e11d48; --live-soft:rgba(225,29,72,.09);
   --up:#15955a; --down:#dc2626; --amber:#c27803;
+  --z-ucl:#2b56f0; --z-uclq:#7f9cf5; --z-uel:#e07a10; --z-uecl:#0f9d84; --z-relpo:#f0703c; --z-rel:#dc2626;
   --win:#15955a; --draw:#7d8797; --loss:#dc2626;
   --pitch:#2f8a4e; --pitch-2:#2b8048; --pitch-line:rgba(255,255,255,.55);
   --skel:#e7ebf1; --skel-hi:#f4f6f9;
@@ -222,6 +225,7 @@ picture.lp{display:inline-flex;flex:none}
 .xbtn{margin-left:auto;width:32px;height:32px;border-radius:10px;display:none;place-items:center;color:var(--muted);background:var(--surface-2)}
 .dscore{display:grid;grid-template-columns:1fr auto 1fr;align-items:start;gap:8px;margin-top:16px}
 .dteam{display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;min-width:0}
+.dteam .tlogo{display:grid;place-items:center;border-radius:16px;padding:4px}
 .dteam .tn{font-weight:800;line-height:1.2;overflow-wrap:anywhere}
 .dteam .rec{font-size:11px;color:var(--muted)}
 .dmid{text-align:center;padding-top:4px}
@@ -899,18 +903,34 @@ function standingsEntries(lgId){
   const d=peek(URL.std(LG[lgId]));if(!d)return null;
   const groups=(d.children&&d.children.length?d.children:[d]).map(g=>({name:g.name,entries:(g.standings?.entries||[]).map(e=>{const st={};(e.stats||[]).forEach(x=>{st[x.name]=x.value;st[x.name+'_d']=x.displayValue;if(x.type)st[x.type+'_t']=x.displayValue});return{t:team(e.team,LG[lgId]),st,note:e.note}})}));
   for(const g of groups)g.entries.sort((a,b)=>LG[lgId].sp==='basketball'?((a.st.playoffSeed??99)-(b.st.playoffSeed??99)||(b.st.winPercent||0)-(a.st.winPercent||0)):(a.st.rank??99)-(b.st.rank??99));
+  for(const g of groups){const n=g.entries.length;g.entries.forEach((e,i)=>{if(!e.note){const c=customZone(lgId,i,n);if(c)e.note=c}})}
   return groups;
 }
+const ZC={ucl:'var(--z-ucl)',uclq:'var(--z-uclq)',uel:'var(--z-uel)',uecl:'var(--z-uecl)',lib:'var(--z-ucl)',libq:'var(--z-uclq)',sud:'var(--z-uecl)',po:'var(--z-ucl)',pin:'var(--z-uel)',relpo:'var(--z-relpo)',rel:'var(--z-rel)',elim:'transparent'};
+function zoneOf(n){if(!n)return null;if(n.cat)return n;const d=n.description||'';const z=(cat,label)=>({cat,label});
+  if(/relegation play|promoci/i.test(d))return z('relpo','Promoción de descenso');if(/relegat|descenso/i.test(d))return z('rel','Descenso');
+  if(/champions league qualifying/i.test(d))return z('uclq','Previa de Champions');if(/champions league/i.test(d))return z('ucl','Champions League');
+  if(/europa league qualifying/i.test(d))return z('uel','Previa de Europa League');if(/europa league/i.test(d))return z('uel','Europa League');if(/conference/i.test(d))return z('uecl','Previa de Conference League');
+  if(/round one/i.test(d))return z('po','Playoffs MLS (primera ronda)');if(/wild card/i.test(d))return z('pin','Playoffs MLS (wild card)');
+  if(/knockout phase playoffs - seeded/i.test(d))return z('uclq','Repesca (cabeza de serie)');if(/knockout phase playoffs/i.test(d))return z('pin','Repesca');if(/round of 16/i.test(d))return z('po','Octavos de final');
+  if(/eliminat/i.test(d))return z('elim','Eliminado');if(/playoff/i.test(d))return z('po','Playoffs');return z('po',d)}
+// zonas propias para las ligas en las que ESPN no las marca
+function customZone(lgId,i,n,kind){const z=(cat,label)=>({cat,label});
+  if(lgId==='arg.1'&&kind==='anual')return i<3?z('lib','Copa Libertadores'):i<9?z('sud','Copa Sudamericana'):i===n-1?z('rel','Descenso por tabla anual'):null;
+  if(lgId==='arg.1')return i<8?z('po','Octavos de final'):null;
+  if(lgId==='bra.1')return i<4?z('lib','Copa Libertadores'):i<6?z('libq','Previa de Libertadores'):i<12?z('sud','Copa Sudamericana'):i>=n-4?z('rel','Descenso'):null;
+  if(lgId==='mex.1')return i<6?z('po','Liguilla'):i<10?z('pin','Play-In'):null;
+  return null}
 function trNote(d){return d.replace('Champions League qualifying','Previa de Champions').replace('Europa League qualifying','Previa de Europa League').replace('Conference League qualifying','Previa de Conference League').replace(/Relegation playoff/i,'Promoción de descenso').replace(/Relegation/i,'Descenso').replace(/Promotion playoff/i,'Promoción').replace(/Playoffs?/i,'Playoff').replace('Round of 16','Octavos de final').replace('Knockout round playoffs','Ronda previa a octavos').replace('Eliminated','Eliminado')}
 function standTable(g,lgId,hl=[],compact=false){
   const lg=LG[lgId];const rows=g.entries;
   const tcell=e=>`<td class="l"><span class="tcell">${logo(e.t)}<button class="tnm" data-act="team" data-k="${esc(e.t.k)}" data-lg="${lgId}">${esc(e.t.name)}</button>${e.live?`<span class="lvpill ${e.live.r}"><span class="dot pulse"></span>${esc(e.live.sc)}</span>`:''}${S.favs.has(e.t.k)?`<span style="color:var(--amber);display:inline-flex">${ICON.star(true,11)}</span>`:''}</span></td>`;
   if(lg.sp==='basketball')return `<div class="sec">${g.name?`<h4 style="padding:0 6px">${esc(g.name.replace('Eastern Conference','Conferencia Este').replace('Western Conference','Conferencia Oeste'))}</h4>`:''}<div class="tw"><table class="tb"><thead><tr><th>#</th><th class="l">Equipo</th><th>G</th><th>P</th><th>%</th><th>Dif.</th>${compact?'':'<th class="hm">Casa</th><th class="hm">Fuera</th><th class="hm">Últ. 10</th><th>Racha</th><th class="hm">PPP</th><th class="hm">Rec.</th>'}</tr></thead><tbody>
     ${rows.map((e,i)=>`<tr class="${hl.includes(e.t.id)?'hl':''} ${S.favs.has(e.t.k)?'fav':''}"><td class="pos" style="--zc:${i<6?'var(--accent)':i<10?'var(--faint)':'transparent'}">${i+1}</td>${tcell(e)}<td>${e.st.wins??''}</td><td>${e.st.losses??''}</td><td>${e.st.winPercent_d??''}</td><td>${e.st.gamesBehind_d??''}</td>${compact?'':`<td class="hm">${e.st.home_t||e.st.Home_d||''}</td><td class="hm">${e.st.road_t||e.st.Road_d||''}</td><td class="hm">${e.st.lasttengames_t||e.st['Last Ten Games_d']||''}</td><td>${e.st.streak_d??''}</td><td class="hm">${e.st.avgPointsFor_d??''}</td><td class="hm">${e.st.avgPointsAgainst_d??''}</td>`}</tr>`).join('')}</tbody></table></div>${compact?'':'<div class="legend"><span style="--zc:var(--accent)"><i></i>Playoffs directos</span><span style="--zc:var(--faint)"><i></i>Play-in</span></div>'}</div>`;
-  const notes=new Map();(g.posNotes||rows.map(e=>e.note)).forEach(n=>{if(n?.description)notes.set(n.description,n.color)});
+  const notes=new Map();(g.posNotes||rows.map(e=>e.note)).forEach(n=>{const z=zoneOf(n);if(z&&z.cat!=='elim')notes.set(z.label,ZC[z.cat])});
   return `<div class="sec">${g.name&&!compact?`<h4 style="padding:0 6px">${esc(g.name)}</h4>`:''}<div class="tw"><table class="tb"><thead><tr><th>#</th><th class="l">Equipo</th><th>PJ</th>${compact?'':'<th class="hm">G</th><th class="hm">E</th><th class="hm">P</th><th class="hm">Goles</th>'}<th>DG</th><th>Pts</th></tr></thead><tbody>
-    ${rows.map((e,i)=>`<tr class="${hl.includes(e.t.id)?'hl':''} ${S.favs.has(e.t.k)?'fav':''}"><td class="pos" style="--zc:${(g.posNotes?g.posNotes[i]:e.note)?.color||'transparent'}">${e.st.rank??i+1}${e.move?`<span class="mv ${e.move>0?'up':'dn'}">${e.move>0?'▲':'▼'}${Math.abs(e.move)}</span>`:''}</td>${tcell(e)}<td>${e.st.gamesPlayed??''}</td>${compact?'':`<td class="hm">${e.st.wins??''}</td><td class="hm">${e.st.ties??''}</td><td class="hm">${e.st.losses??''}</td><td class="hm">${e.st.pointsFor??''}:${e.st.pointsAgainst??''}</td>`}<td>${e.st.pointDifferential_d??''}</td><td class="pts">${e.st.points??''}</td></tr>`).join('')}</tbody></table></div>
-    ${!compact&&notes.size?`<div class="legend">${[...notes].map(([d,c])=>`<span style="--zc:${c}"><i></i>${esc(trNote(d))}</span>`).join('')}</div>`:''}</div>`;
+    ${rows.map((e,i)=>`<tr class="${hl.includes(e.t.id)?'hl':''} ${S.favs.has(e.t.k)?'fav':''}"><td class="pos" style="--zc:${ZC[zoneOf(g.posNotes?g.posNotes[i]:e.note)?.cat]||'transparent'}">${e.st.rank??i+1}${e.move?`<span class="mv ${e.move>0?'up':'dn'}">${e.move>0?'▲':'▼'}${Math.abs(e.move)}</span>`:''}</td>${tcell(e)}<td>${e.st.gamesPlayed??''}</td>${compact?'':`<td class="hm">${e.st.wins??''}</td><td class="hm">${e.st.ties??''}</td><td class="hm">${e.st.losses??''}</td><td class="hm">${e.st.pointsFor??''}:${e.st.pointsAgainst??''}</td>`}<td>${e.st.pointDifferential_d??''}</td><td class="pts">${e.st.points??''}</td></tr>`).join('')}</tbody></table></div>
+    ${!compact&&notes.size?`<div class="legend">${[...notes].map(([d,c])=>`<span style="--zc:${c}"><i></i>${esc(d)}</span>`).join('')}</div>`:''}</div>`;
 }
 /* tabla en vivo: suma a la clasificación los resultados de los partidos que se están jugando ahora */
 function liveDelta(lgId){
@@ -958,7 +978,7 @@ function argAnual(){
   const acc=sumTables(cs.map(c=>c.data));
   const entries=[...acc.values()].map(e=>{const dif=e.st.pointsFor-e.st.pointsAgainst;e.st.pointDifferential=dif;e.st.pointDifferential_d=(dif>0?'+':'')+dif;return e})
     .sort((a,b)=>b.st.points-a.st.points||b.st.pointDifferential-a.st.pointDifferential||b.st.pointsFor-a.st.pointsFor);
-  entries.forEach((e,i)=>{e.st.rank=i+1;e.note=i===entries.length-1?{description:'Descenso por tabla anual',color:'var(--loss)'}:null});
+  entries.forEach((e,i)=>{e.st.rank=i+1;e.note=customZone('arg.1',i,entries.length,'anual')});
   return{year:cur.year,g:{name:`Tabla anual ${cur.year}`,entries}};
 }
 function argPromedios(){
@@ -974,7 +994,7 @@ function argPromedios(){
 function argTables(tab){
   if(tab==='anual'){const r=argAnual();if(r.loading)return r.err?errBox(r.err,''):`<div class="vbody">${skelBlock(420)}</div>`;
     const delta=liveDelta('arg.1');const on=delta.size>0&&S.tbLive!==false;const g=on?projectGroup(r.g,delta):r.g;
-    return liveToggle(delta,on)+standTable(g,'arg.1')+`<p class="foot" style="padding:0 14px 12px">Suma del Torneo Apertura y el Torneo Clausura ${r.year} (fase regular). El último de la tabla anual desciende.</p>`}
+    return liveToggle(delta,on)+standTable(g,'arg.1')+`<p class="foot" style="padding:0 14px 12px">Suma del Torneo Apertura y el Torneo Clausura ${r.year} (fase regular). Los campeones del Apertura, el Clausura y la Copa Argentina tienen su propio cupo a la Libertadores: si alguno está en zona de copas, su lugar pasa al siguiente. El último de la tabla anual desciende.</p>`}
   const r=argPromedios();if(r.loading)return r.err?errBox(r.err,''):`<div class="vbody">${skelBlock(420)}</div>`;
   const n=r.rows.length;
   return `<div class="tw"><table class="tb"><thead><tr><th>#</th><th class="l">Equipo</th>${r.years.map(y=>`<th class="hm">${y}</th>`).join('')}<th>Pts</th><th>PJ</th><th>Promedio</th></tr></thead><tbody>
@@ -1230,9 +1250,9 @@ function headerHtml(m,lgName){
   const pen=m.label==='Penaltis'&&m.pen[0]!=null?`<div class="sub">Penaltis ${m.pen[0]}-${m.pen[1]}</div>`:'';
   const key='d'+m.hs+'-'+m.as;const prev=S.lastScore.get('det'+m.id);const changed=prev&&prev!==key&&live;S.lastScore.set('det'+m.id,key);
   return `<div class="dmeta"><button class="lnk" data-act="league" data-id="${m.lg}">${leagueLogo(m.lg,18)}${esc(lgName)}</button><span>${fmtDay(dkey(m.ko))}, ${hm(m.ko)}</span>${m.note?`<span>· ${esc(m.note)}</span>`:''}<button class="xbtn press" data-act="close" aria-label="Cerrar">${ICON.x}</button></div>
-   <div class="dscore"><div class="dteam">${logo(m.home,60)}<button class="tn" data-act="team" data-k="${esc(m.home.k)}" data-lg="${m.lg}">${esc(m.home.name)}</button>${m.rec[0]?`<span class="rec">${esc(m.rec[0])}</span>`:''}${favBtn(m.home)}</div>
+   <div class="dscore"><div class="dteam"><button class="tlogo press" data-act="team" data-k="${esc(m.home.k)}" data-lg="${m.lg}" aria-label="Ver ficha de ${esc(m.home.name)}">${logo(m.home,60)}</button><button class="tn" data-act="team" data-k="${esc(m.home.k)}" data-lg="${m.lg}">${esc(m.home.name)}</button>${m.rec[0]?`<span class="rec">${esc(m.rec[0])}</span>`:''}${favBtn(m.home)}</div>
    <div class="dmid"><div class="big ${m.st==='pre'||m.st==='pst'?'pre':live?'live':''}">${m.st==='pre'||m.st==='pst'?hm(m.ko):`<span class="${changed?'pop':''}">${m.hs??0}<span style="opacity:.4;margin:0 .08em">:</span>${m.as??0}</span>`}</div><div class="dst ${m.st}">${m.st==='live'?'<span class="dot pulse"></span>':''}${m.st==='pre'?fmtDay(dkey(m.ko)):esc(m.label)}</div>${pen}</div>
-   <div class="dteam">${logo(m.away,60)}<button class="tn" data-act="team" data-k="${esc(m.away.k)}" data-lg="${m.lg}">${esc(m.away.name)}</button>${m.rec[1]?`<span class="rec">${esc(m.rec[1])}</span>`:''}${favBtn(m.away)}</div></div>`;
+   <div class="dteam"><button class="tlogo press" data-act="team" data-k="${esc(m.away.k)}" data-lg="${m.lg}" aria-label="Ver ficha de ${esc(m.away.name)}">${logo(m.away,60)}</button><button class="tn" data-act="team" data-k="${esc(m.away.k)}" data-lg="${m.lg}">${esc(m.away.name)}</button>${m.rec[1]?`<span class="rec">${esc(m.rec[1])}</span>`:''}${favBtn(m.away)}</div></div>`;
 }
 function tabsHtml(tabs,cur){return `<nav class="tabs" role="tablist" data-ind="dtab"><span class="ind"></span>${tabs.map(([id,l,n])=>`<button role="tab" data-act="dtab" data-id="${id}" aria-selected="${cur===id}">${l}</button>`).join('')}</nav>`}
 function teamStatMap(s,m){const out={h:{},a:{}};for(const t of s.boxscore?.teams||[]){const side=t.team?.id===m.away.id?'a':'h';for(const x of t.statistics||[]){out[side][x.name]=typeof x.value==='number'?x.value:num(x.displayValue);out[side][x.name+'_d']=x.displayValue}}return out}
@@ -1798,7 +1818,13 @@ if(!store.get('spi.nmig1',false)){let ch=false;for(const v of Object.values(S.no
   if(LG[lg].sp!==S.sport){S.sport=LG[lg].sp}S.match={id,lg};history.replaceState(null,'',location.pathname);setTimeout(openDetail,50)})();
 renderAll(true);
 setInterval(()=>{if(document.hidden)return;renderAll(false);if(!S.match)autoSelect()},30000);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)renderAll(false)});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){renderAll(false);checkUpdate()}});
+// el iPhone reanuda la app sin recargarla: al volver se comprueba si hay versión nueva
+const BUILD=document.querySelector('meta[name=spi-build]')?.content;let lastCheck=0;
+async function checkUpdate(){if(location.protocol!=='https:'||Date.now()-lastCheck<60000)return;lastCheck=Date.now();
+  try{const t=await fetch('./?build='+Date.now(),{cache:'no-store'}).then(r=>r.text());const b=(t.match(/name="spi-build" content="([^"]+)"/)||[])[1];
+    if(b&&BUILD&&b!==BUILD){toast('Actualizando SPI Sports…');setTimeout(()=>location.reload(),600)}}catch(e){}}
+setInterval(checkUpdate,30*60e3);setTimeout(checkUpdate,4000);
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
