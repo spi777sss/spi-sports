@@ -8,7 +8,7 @@
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0e14">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
 <meta name="color-scheme" content="dark light">
-<meta name="spi-build" content="2026-10-25.4">
+<meta name="spi-build" content="2026-10-25.5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SPI Sports">
@@ -1756,7 +1756,8 @@ function tennisMatches(lg,data){
     for(const c of g.competitions||[]){
       if(NT.has(c)){out.push(NT.get(c));continue}
       const ps=(c.competitors||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0));const P1=ps[0]||{},P2=ps[1]||{};
-      const nameOf=p=>p.athlete?p.athlete:{id:p.id,displayName:(p.roster?.athletes||[]).map(x=>x.shortName||x.displayName).join(' / ')||p.displayName,flag:p.roster?.athletes?.[0]?.flag};
+      // en individuales el id del jugador viene en el competidor, no en el atleta
+      const nameOf=p=>p.athlete?{...p.athlete,id:p.athlete.id||p.id}:{id:p.id,displayName:(p.roster?.athletes||[]).map(x=>x.shortName||x.displayName).join(' / ')||p.displayName,flag:p.roster?.athletes?.[0]?.flag};
       const home=player(nameOf(P1),lg),away=player(nameOf(P2),lg);
       const t=c.status?.type||{};const n=t.name||'';
       const ls=[P1,P2].map(p=>(p.linescores||[]).map(l=>({v:num(l.value),tb:num(l.tiebreak)})));
@@ -1799,7 +1800,10 @@ function detailTennis(m,anim){
    <div class="dscore"><div class="dteam">${ph(m.home)}<button class="tn" data-act="player" data-id="${esc(m.home.id)}" data-sp="tennis" data-lg="${m.lg}">${m.home.flag?`<img class="flag" src="${esc(m.home.flag)}" alt=""> `:''}${esc(m.home.name)}</button>${m.seed[0]?`<span class="rec">Cabeza de serie ${m.seed[0]}</span>`:''}${m.dbl?'':favBtn(m.home)}</div>
    <div class="dmid"><div class="big ${m.st==='pre'||m.st==='pst'?'pre':live?'live':''}">${m.st==='pre'||m.st==='pst'?hm(m.ko):`${m.hs}<span style="opacity:.4;margin:0 .08em">:</span>${m.as}`}</div><div class="dst ${m.st}">${live?'<span class="dot pulse"></span>':''}${m.st==='pre'?fmtDay(dkey(m.ko)):esc(m.label)}</div><div class="sub">sets</div></div>
    <div class="dteam">${ph(m.away)}<button class="tn" data-act="player" data-id="${esc(m.away.id)}" data-sp="tennis" data-lg="${m.lg}">${m.away.flag?`<img class="flag" src="${esc(m.away.flag)}" alt=""> `:''}${esc(m.away.name)}</button>${m.seed[1]?`<span class="rec">Cabeza de serie ${m.seed[1]}</span>`:''}${m.dbl?'':favBtn(m.away)}</div></div></div>`;
-  h+=`<div class="dbody ${anim?'enter':''}">`;
+  const tabs=m.dbl?[['sum','Resumen']]:[['sum','Resumen'],['pred','Pronóstico']];
+  if(!tabs.some(t=>t[0]===S.dtab))S.dtab='sum';
+  h+=(tabs.length>1?tabsHtml(tabs,S.dtab):'')+`<div class="dbody ${anim?'enter':''}">`;
+  if(S.dtab==='pred')return h+tennisPredTab(m,anim)+'</div>';
   if(m.sets.length)h+=`<div class="sec"><h4>Resultado por sets</h4><div class="tw"><table class="tb"><thead><tr><th class="l">Jugador</th>${m.sets.map((_,i)=>`<th>Set ${i+1}</th>`).join('')}</tr></thead><tbody>${['h','a'].map(sd=>{const t=sd==='h'?m.home:m.away;return `<tr><td class="l"><b>${esc(t.short||t.name)}</b>${m.win===sd?' ✓':''}</td>${m.sets.map((x,i)=>{const v=sd==='h'?x.h:x.a,o2=sd==='h'?x.a:x.h,tb=sd==='h'?x.htb:x.atb;return `<td class="${v>o2?'pts':''}">${v??''}${tb!=null?`<sup>${tb}</sup>`:''}</td>`}).join('')}</tr>`}).join('')}</tbody></table></div></div>`;
   // ranking de cada jugador
   const rk=need(URL.rank(LG[m.lg]),3600000);const ranks=rk.data?.rankings?.[0]?.ranks||[];const rkOf=t=>ranks.find(r=>String(r.athlete?.id)===t.id);
@@ -1809,6 +1813,48 @@ function detailTennis(m,anim){
   h+=`<div class="sec"><h4>Información</h4><div class="info"><div><span>Torneo</span><span>${esc(m.tour)}</span></div><div><span>Ronda</span><span>${esc(m.round)}</span></div>${m.venue?`<div><span>Sede</span><span>${esc(m.venue)}</span></div>`:''}<div><span>Inicio</span><span>${fmtDay(dkey(m.ko))}, ${hm(m.ko)}</span></div>${m.note?`<div><span>Resultado</span><span>${esc(m.note.replace(/ bt /,' venció a '))}</span></div>`:''}</div></div>`;
   if(!m.dbl)h+=`<div class="nactions" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost press" data-act="player" data-id="${esc(m.home.id)}" data-sp="tennis" data-lg="${m.lg}">Ficha de ${esc(m.home.short||m.home.name)}</button><button class="btn ghost press" data-act="player" data-id="${esc(m.away.id)}" data-sp="tennis" data-lg="${m.lg}">Ficha de ${esc(m.away.short||m.away.name)}</button></div>`;
   return h+'</div>';
+}
+/* pronóstico de tenis: Elo de Tennis Abstract + SportyTrader + ranking, y mercados por sets */
+// probabilidad de ganar cada set que corresponde a una probabilidad de ganar el partido
+function setProb(p,bo){const f=s=>bo===5?s*s*s*(10-15*s+6*s*s):s*s*(3-2*s);let lo=0,hi=1;for(let i=0;i<40;i++){const mid=(lo+hi)/2;f(mid)<p?lo=mid:hi=mid}return(lo+hi)/2}
+function eloFind(list,name){let best=null,bs=0;for(const x of list||[]){const s=nsim(x.name,name);if(s>bs){bs=s;best=x}}return bs>=.75?best:null}
+function tennisPredTab(m,anim){
+  const lg=LG[m.lg];const tc=PUSH_API?need(`${PUSH_API}/tennis?tour=${m.lg}`,1800000):null;const td=tc?.data;
+  const rk=need(URL.rank(lg),3600000);const ranks=rk.data?.rankings?.[0]?.ranks||[];const rkOf=t=>ranks.find(r=>String(r.athlete?.id)===t.id);
+  if(!td&&tc?.p&&!rk.data)return skelBlock(320);
+  const H=m.home,A=m.away;const ea=eloFind(td?.elo,H.name),eb=eloFind(td?.elo,A.name);const ra=rkOf(H),rb=rkOf(A);
+  const srcs=[];
+  if(ea&&eb){const pe=1/(1+Math.pow(10,(eb.elo-ea.elo)/400));srcs.push({name:'Tennis Abstract',sub:`Elo ${Math.round(ea.elo)} vs ${Math.round(eb.elo)}`,w:.45,p:[pe,1-pe],url:`https://tennisabstract.com/reports/${m.lg}_elo_ratings.html`})}
+  const st=(td?.sportytrader||[]).map(x=>{const d=Math.min(nsim(x.p1,H.name),nsim(x.p2,A.name)),r=Math.min(nsim(x.p1,A.name),nsim(x.p2,H.name));return{x,d,r}}).filter(o=>Math.max(o.d,o.r)>=.75).sort((a,b)=>Math.max(b.d,b.r)-Math.max(a.d,a.r))[0];
+  if(st){const pickName=st.x.pick===1?st.x.p1:st.x.p2;const ph=nsim(pickName,H.name)>=.75?st.x.prob/100:1-st.x.prob/100;srcs.push({name:'SportyTrader',sub:'pronóstico del partido',w:.3,p:[ph,1-ph],url:ST_URL+'/pronosticos/tenis/'})}
+  if(ra&&rb&&ra.points&&rb.points){const k=.9;const ph=Math.pow(ra.points,k)/(Math.pow(ra.points,k)+Math.pow(rb.points,k));srcs.push({name:'Modelo SPI',sub:`ranking ${lg.name}: ${ra.current}º vs ${rb.current}º`,w:.25,p:[ph,1-ph]})}
+  if(!srcs.length)return (tc?.p||rk.p)?skelBlock(320):`<div class="empty-state"><strong>Sin datos suficientes</strong><span>Estos jugadores no aparecen en el Elo de Tennis Abstract, en SportyTrader ni en el ranking.</span></div>`;
+  srcs.forEach(x=>{x.pick='Gana '+(x.p[0]>=.5?(H.short||H.name):(A.short||A.name))});
+  const W=srcs.reduce((a,x)=>a+x.w,0);const P=srcs.reduce((a,x)=>a+x.p[0]*x.w,0)/W;
+  const favH=P>=.5;const fav=favH?H:A,dog=favH?A:H;const pf=favH?P:1-P;const agree=srcs.filter(x=>(x.p[0]>=.5)===favH).length;
+  const bo=m.major&&m.lg==='atp'?5:3;const s=setProb(P,bo);const q=1-s;
+  const nH=H.short||H.name,nA=A.short||A.name;
+  const mk=[{label:`Gana ${H.name}`,p:P},{label:`Gana ${A.name}`,p:1-P}];
+  if(bo===3){mk.push({label:`${nH} gana 2-0`,p:s*s},{label:`${nH} gana 2-1`,p:2*s*s*q},{label:`${nA} gana 2-0`,p:q*q},{label:`${nA} gana 2-1`,p:2*q*q*s},
+    {label:'El partido llega al tercer set',p:2*s*q},{label:'Se decide en dos sets',p:1-2*s*q},{label:`${nA} gana al menos un set`,p:1-s*s},{label:`${nH} gana al menos un set`,p:1-q*q})}
+  else{mk.push({label:`${nH} gana 3-0`,p:s**3},{label:`${nH} gana 3-1`,p:3*s**3*q},{label:`${nH} gana 3-2`,p:6*s**3*q*q},{label:`${nA} gana 3-0`,p:q**3},{label:`${nA} gana 3-1`,p:3*q**3*s},{label:`${nA} gana 3-2`,p:6*q**3*s*s},
+    {label:'El partido llega al quinto set',p:6*s*s*q*q},{label:'Se juegan al menos 4 sets',p:1-s**3-q**3},{label:`${nA} gana al menos un set`,p:1-s**3},{label:`${nH} gana al menos un set`,p:1-q**3})}
+  const fs=favH?s:q;const fN=favH?nH:nA;
+  const risky=mk.filter(x=>x.label.startsWith(fN+' gana '+(bo===3?'2':'3')));
+  let h=`<div class="pick"><span class="k">Pronóstico SPI · consenso de ${srcs.length} fuente${srcs.length>1?'s':''}</span><span class="v">Gana ${esc(fav.name)}</span>
+    <span class="s">${agree} de ${srcs.length} fuentes coinciden. Al mejor de ${bo} sets: ${esc(fN)} ganaría cada set con un ${pct(fs)} de probabilidad.</span>
+    <div class="conf"><span>Confianza ${confLabel(pf)}</span><span class="m"><i style="width:${anim?0:pf*100}%" data-w="${pf*100}"></i></span><b style="color:var(--fg)">${pct(pf)}</b></div></div>`;
+  h+=`<div class="sec"><h4>Alternativas</h4>${tierCards(mk,`Gana ${fav.name}`,risky)}</div>`;
+  h+=`<div class="sec"><h4>Probabilidad de victoria</h4>${probBar([P,1-P],[nH,nA])}</div>`;
+  h+=`<div class="sec"><h4>Qué dice cada fuente</h4>${srcRows(srcs,[nH,nA])}</div>`;
+  h+=`<div class="sec"><h4>Todas las opciones<span>prob. · cuota justa</span></h4><div class="mks">${mk.slice().sort((a,b)=>b.p-a.p).map(marketRow).join('')}</div></div>`;
+  // análisis
+  const row=(k,va,vb2)=>`<span>${va}</span><span class="k">${k}</span><span class="v2">${vb2}</span>`;const f0=v=>v==null?'–':Math.round(v);
+  const wk=t=>{const won=new Set();for(const u of URL.sbs(lg,today()))for(const x of matchesOf(lg,peek(u)))if(x.evId===m.evId&&!x.dbl&&x.st==='ft'&&x.id!==m.id&&((x.home.id===t.id&&x.win==='h')||(x.away.id===t.id&&x.win==='a')))won.add(x.id);return won.size};
+  h+=`<div class="sec"><h4>Análisis</h4><div class="kv">${row('Ranking '+lg.name,ra?ra.current+'º':'–',rb?rb.current+'º':'–')}${row('Puntos',ra?ra.points.toLocaleString('es-ES'):'–',rb?rb.points.toLocaleString('es-ES'):'–')}${row('Elo general',ea?`${f0(ea.elo)} <span class="sub">(${ea.rank}º)</span>`:'–',eb?`${f0(eb.elo)} <span class="sub">(${eb.rank}º)</span>`:'–')}${row('Elo pista dura',f0(ea?.hard),f0(eb?.hard))}${row('Elo tierra batida',f0(ea?.clay),f0(eb?.clay))}${row('Elo hierba',f0(ea?.grass),f0(eb?.grass))}${row('Mejor Elo de su carrera',ea?`${f0(ea.peak)} <span class="sub">${esc(ea.peakMonth)}</span>`:'–',eb?`${f0(eb.peak)} <span class="sub">${esc(eb.peakMonth)}</span>`:'–')}${row('Edad',ea?.age?Math.floor(ea.age):'–',eb?.age?Math.floor(eb.age):'–')}${row('Victorias en este torneo',wk(H),wk(A))}</div>
+    ${ea&&eb?`<ul class="insights">${[Math.abs(ea.elo-eb.elo)>150?`${(ea.elo>eb.elo?H:A).name} tiene un Elo ${Math.round(Math.abs(ea.elo-eb.elo))} puntos superior: diferencia clara de nivel.`:`Elo parejo (diferencia de ${Math.round(Math.abs(ea.elo-eb.elo))} puntos): partido abierto.`, ea.peak&&ea.elo<ea.peak-150?`${H.name} está lejos de su mejor nivel (Elo máximo ${f0(ea.peak)} en ${esc(ea.peakMonth)}).`:'', eb.peak&&eb.elo<eb.peak-150?`${A.name} está lejos de su mejor nivel (Elo máximo ${f0(eb.peak)} en ${esc(eb.peakMonth)}).`:''].filter(Boolean).map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`:''}</div>`;
+  h+=`<p class="disc">Consenso ponderado: Tennis Abstract (Elo) 45 %, SportyTrader 30 % y Modelo SPI (ranking) 25 %. Si falta una fuente, el peso se reparte entre las demás. Los mercados por sets se calculan a partir de la probabilidad de victoria. ESPN no publica cuotas de tenis, por eso las cuotas que se muestran son «justas». Es una estimación, no una garantía.</p>`;
+  return h;
 }
 function viewTennisLeague(lg,tab,anim){
   let h=`<div class="panel"><div class="vhead">${leagueLogo(lg.id,56)}<div class="vt"><h1>${lg.name}</h1><div class="vs">Tenis · ${lg.country}</div></div></div>

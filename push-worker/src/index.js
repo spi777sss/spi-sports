@@ -77,6 +77,33 @@ async function sportytraderDetail(path) {
   return { p: nums.length === 3 ? nums : null, score: sc ? [+sc[1], +sc[2]] : null, tip };
 }
 
+// Tenis · Tennis Abstract: ratings Elo (general y por superficie: dura, tierra, hierba)
+async function tennisElo(tour) {
+  const h = await getText(`https://tennisabstract.com/reports/${tour}_elo_ratings.html`);
+  const out = [];
+  for (const m of h.matchAll(/<tr>(<td[\s\S]*?)<\/tr>/g)) {
+    const cells = [...m[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map(c => strip(c[1]));
+    if (cells.length < 13 || !/^\d+$/.test(cells[0])) continue;
+    const n = v => (v === '' ? null : parseFloat(v));
+    out.push({ rank: +cells[0], name: cells[1], age: n(cells[2]), elo: n(cells[3]), hard: n(cells[6]), clay: n(cells[8]), grass: n(cells[10]), peak: n(cells[12]), peakMonth: cells[13] || '' });
+  }
+  return out;
+}
+// Tenis · SportyTrader: favorito y probabilidad de cada partido
+async function sportytraderTennis() {
+  const h = await getText(`${ST}/pronosticos/tenis/`);
+  const out = [];
+  for (const seg of h.split('<span class="text-xs dark:text-white">').slice(1)) {
+    const when = strip(seg.slice(0, seg.indexOf('</span>')));
+    const tour = strip((seg.match(/<p class="py-0 my-0 text-sm dark:text-white">([\s\S]*?)<\/p>/) || [])[1] || '');
+    const names = [...seg.slice(0, 5000).matchAll(/<img class="bg-white p-1[^"]*"[^>]*alt="([^"]+)"/g)].map(m => strip(m[1]));
+    const pick = (seg.match(/font-semibold bg-primary-green text-white mx-1">([12])</) || [])[1];
+    const prob = (seg.match(/Probabilidad (\d+)%/) || [])[1];
+    if (names.length >= 2 && pick && prob) out.push({ when, tour, p1: names[0], p2: names[1], pick: +pick, prob: +prob });
+  }
+  return out;
+}
+
 // Vitibet: marcador previsto y apuesta recomendada (publica los partidos del día)
 async function vitibet() {
   const h = await getText('https://www.vitibet.com/index.php?lang=en');
@@ -131,6 +158,14 @@ export default {
       const [sa, vb, st] = await Promise.all([statarea(d).catch(() => []), vitibet().catch(() => []), sportytrader().catch(() => [])]);
       const res = json({ date: d, statarea: sa, vitibet: vb, sportytrader: st, at: Date.now() }, 200, origin);
       res.headers.set('cache-control', 'public, max-age=900');
+      return res;
+    }
+    if (req.method === 'GET' && url.pathname === '/tennis') {
+      const tour = url.searchParams.get('tour');
+      if (tour !== 'atp' && tour !== 'wta') return json({ error: 'Circuito no válido' }, 400, origin);
+      const [elo, st] = await Promise.all([tennisElo(tour).catch(() => []), sportytraderTennis().catch(() => [])]);
+      const res = json({ tour, elo, sportytrader: st, at: Date.now() }, 200, origin);
+      res.headers.set('cache-control', 'public, max-age=1800');
       return res;
     }
     if (req.method === 'GET' && url.pathname === '/st') {
