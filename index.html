@@ -8,7 +8,7 @@
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0e14">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
 <meta name="color-scheme" content="dark light">
-<meta name="spi-build" content="2026-10-25.3">
+<meta name="spi-build" content="2026-10-25.4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SPI Sports">
@@ -511,6 +511,38 @@ table.tb{width:100%;border-collapse:collapse;font-size:13px}
 @media (hover:hover) and (pointer:fine){.art:hover{border-color:var(--accent)}}
 @media (max-width:819px){.newsfeed{grid-template-columns:minmax(0,1fr)}.art.lead .im{aspect-ratio:16/9}.art.lead h3{font-size:26px}}
 
+/* tenis y jugadores */
+.flag{flex:none;width:20px;height:14px;border-radius:3px;object-fit:cover;background:var(--surface-3);display:inline-block;vertical-align:middle}
+.trow{grid-template-columns:62px minmax(0,1fr) 0 auto}
+.trow .rst small{display:block;font-size:9.5px;font-weight:600;margin-top:2px;max-width:62px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tsets{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.tsl{display:flex;gap:2px;height:20px}
+.set{width:20px;text-align:center;font-family:var(--f-display);font-size:18px;font-weight:700;color:var(--muted);line-height:20px;position:relative}
+.set.w{color:var(--fg);font-weight:900}
+.set.cur{color:var(--live)}
+.set sup{position:absolute;top:-4px;right:-1px;font-size:9px;font-family:var(--f-body)}
+.tphoto{display:block;width:64px;height:64px;border-radius:50%;object-fit:cover;object-position:50% 15%;background:var(--surface-3);box-shadow:0 0 0 2px var(--line)}
+.pphoto{flex:none;width:76px;height:76px;border-radius:22px;object-fit:cover;object-position:50% 12%;background:var(--surface-3)}
+.lcrest.tn-atp{background:#2b56f0;color:#fff}.lcrest.tn-wta{background:#7a3cf0;color:#fff}
+.phits{display:flex;flex-direction:column}
+.phit{display:flex;align-items:center;gap:12px;padding:9px 6px;border-bottom:1px solid var(--line-2);width:100%;border-radius:10px;text-align:left}
+.phit:last-child{border-bottom:0}
+.phimg{flex:none;width:40px;height:40px;border-radius:50%;object-fit:cover;object-position:50% 15%;background:var(--surface-3);display:grid;place-items:center;overflow:hidden}
+.phimg img{width:22px;height:15px;border-radius:2px;object-fit:cover}
+.phtx{flex:1;min-width:0;display:flex;flex-direction:column}
+.phtx b{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sres .phit{padding:8px}
+@media (hover:hover) and (pointer:fine){.phit:hover{background:var(--surface-2)}}
+.wiki h5{margin:16px 0 8px;font-size:13px;font-weight:800;color:var(--accent-2)}
+.wiki h5:first-of-type{margin-top:0}
+.wl{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:13px;line-height:1.45}
+.wp{font-size:13.5px;line-height:1.6;color:var(--fg);margin:0 0 8px}
+.tb.wt td,.tb.wt th{white-space:normal;text-align:left;font-size:12.5px}
+.awards{display:flex;flex-wrap:wrap;gap:8px}
+.aw{display:inline-flex;flex-direction:column;padding:8px 11px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);font-size:13px;font-weight:700}
+.aw b{color:var(--amber);font-family:var(--f-display);font-size:18px;line-height:1}
+.aw small{font-size:10.5px;color:var(--muted);font-weight:600}
+
 /* notificaciones */
 .bell{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--muted);padding:4px 10px;border-radius:99px;border:1px solid var(--line)}
 .bell[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -605,7 +637,7 @@ table.tb{width:100%;border-collapse:collapse;font-size:13px}
   <span class="livepill" id="livepill" hidden><span class="dot pulse"></span><span id="livecount"></span></span>
   <div class="search" id="searchbox">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-    <input id="q" type="search" placeholder="Buscar equipo" autocomplete="off" autocapitalize="none" enterkeyhint="search" aria-label="Buscar equipo">
+    <input id="q" type="search" placeholder="Buscar equipo o jugador" autocomplete="off" autocapitalize="none" enterkeyhint="search" aria-label="Buscar equipo">
     <div class="sres" id="sres" hidden></div>
   </div>
   <button class="icobtn press" data-act="opensearch" aria-label="Buscar equipo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
@@ -658,9 +690,11 @@ const LEAGUES=[
  {id:'bra.1',sp:'soccer',name:'Brasileirão',country:'Brasil',logo:85},
  {id:'usa.1',sp:'soccer',name:'MLS',country:'Estados Unidos',logo:19},
  {id:'nba',sp:'basketball',name:'NBA',country:'Estados Unidos'},
+ {id:'atp',sp:'tennis',name:'ATP',country:'Circuito masculino'},
+ {id:'wta',sp:'tennis',name:'WTA',country:'Circuito femenino'},
 ];
 const LG=Object.fromEntries(LEAGUES.map(l=>[l.id,l]));
-const SPORTS=[{id:'soccer',name:'Fútbol'},{id:'basketball',name:'Baloncesto'}];
+const SPORTS=[{id:'soccer',name:'Fútbol'},{id:'basketball',name:'Baloncesto'},{id:'tennis',name:'Tenis'}];
 const API='https://site.api.espn.com/apis/site/v2/sports/';
 const CORE='https://sports.core.api.espn.com/v2/sports/';
 const ETF=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'});
@@ -748,13 +782,15 @@ function dayMatches(sp,day){
     for(const u of URL.sbs(lg,day)){
       const c=need(u,day===today()?25000:600000);
       if(!c.data){if(!bad){c.err?err++:loading++;bad=true}continue}
-      for(const e of c.data.events||[]){if(seen.has(e.id))continue;seen.add(e.id);const m=norm(e,lg);if(dkey(m.ko)===day)out.push(m)}
+      for(const m of matchesOf(lg,c.data)){if(seen.has(m.id))continue;seen.add(m.id);if(dkey(m.ko)===day)out.push(m)}
     }
   }
   out.sort((a,b)=>a.ko-b.ko);return{out,loading,err};
 }
+// partidos de una respuesta de marcadores: en tenis cada «evento» es un torneo con muchos partidos
+function matchesOf(lg,data){return lg.sp==='tennis'?tennisMatches(lg,data):(data?.events||[]).map(e=>norm(e,lg))}
 function findMatch(lgId,id){
-  for(const [u,c] of C){if(!c.data||!u.includes('/'+lgId+'/'))continue;for(const e of c.data.events||[])if(e.id===id)return norm(e,LG[lgId])}
+  for(const [u,c] of C){if(!c.data||!u.includes('/'+lgId+'/')||!u.includes('scoreboard'))continue;for(const m of matchesOf(LG[lgId],c.data))if(m.id===id)return m}
   return null;
 }
 
@@ -800,6 +836,7 @@ function logo(t,s=20){
 }
 function leagueLogo(id,s=22){
   const lg=LG[id];const px=pxFor(s);
+  if(lg.sp==='tennis')return `<span class="lcrest tn-${lg.id}" style="min-width:${s}px;height:${s}px;font-size:${Math.max(8,s*.36)}px;border-radius:${s*.28}px" aria-hidden="true">${lg.name}</span>`;
   if(lg.sp==='basketball')return pic(rs('/i/teamlogos/leagues/500/nba.png',px),rs('/i/teamlogos/leagues/500-dark/nba.png',px)+'&transparent=true',s,'');
   return pic(rs(`/i/leaguelogos/soccer/500/${lg.logo}.png`,px),rs(`/i/leaguelogos/soccer/500-dark/${lg.logo}.png`,px),s,'');
 }
@@ -820,7 +857,7 @@ function renderHead(){
   const n=LEAGUES.filter(l=>l.sp===S.sport).reduce((a,l)=>a+liveCount(l),0);
   $('#livepill').hidden=!n;$('#livecount').textContent=n+' en vivo';
 }
-function liveCount(lg){const ids=new Set();for(const u of URL.sbs(lg,today()))for(const e of peek(u)?.events||[]){const m=norm(e,lg);if(m.st==='live'||m.st==='ht')ids.add(m.id)}return ids.size}
+function liveCount(lg){const ids=new Set();for(const u of URL.sbs(lg,today()))for(const m of matchesOf(lg,peek(u))){if(m.st==='live'||m.st==='ht')ids.add(m.id)}return ids.size}
 function renderSide(){
   const lgs=LEAGUES.filter(l=>l.sp===S.sport);
   const favs=[...S.favs.values()].sort((a,b)=>a.name.localeCompare(b.name));
@@ -889,8 +926,13 @@ function viewMatches(){
   }
   let i=0;
   const favList=S.filter!=='fav'?list.filter(isFavM):[];
-  if(favList.length)h+=`<section class="panel group"><header class="gh favh"><span style="color:var(--amber);display:inline-flex">${ICON.star(true,16)}</span><span class="gt">Mis equipos</span><span class="gc">${favList.length} partido${favList.length>1?'s':''}</span></header>${favList.map(m=>rowHtml(m,i++)).join('')}</section>`;
-  for(const lg of LEAGUES.filter(l=>l.sp===S.sport)){
+  if(favList.length)h+=`<section class="panel group"><header class="gh favh"><span style="color:var(--amber);display:inline-flex">${ICON.star(true,16)}</span><span class="gt">Mis equipos</span><span class="gc">${favList.length} partido${favList.length>1?'s':''}</span></header>${favList.map(m=>m.sp==='tennis'?rowTennis(m,i++):rowHtml(m,i++)).join('')}</section>`;
+  // tenis: un bloque por torneo (individuales y dobles por separado)
+  if(S.sport==='tennis'){const groups=new Map();for(const m of list){const k=m.lg+'|'+m.evId+'|'+m.dbl;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(m)}
+    for(const ms of [...groups.values()].sort((a,b)=>(b[0].major-a[0].major)||(a[0].lg>b[0].lg?1:a[0].lg<b[0].lg?-1:0)||a[0].tour.localeCompare(b[0].tour)||(a[0].dbl-b[0].dbl))){const m0=ms[0];
+      h+=`<section class="panel group"><header class="gh">${leagueLogo(m0.lg,24)}<span class="gt">${esc(m0.tour)}</span><span class="gc">${m0.dbl?'Dobles':'Individual'}${m0.major?' · Grand Slam':''}</span><button class="ga press" data-act="league" data-id="${m0.lg}">Ranking ${ICON.chev}</button></header>${ms.map(m=>rowTennis(m,i++)).join('')}</section>`}
+  }
+  else for(const lg of LEAGUES.filter(l=>l.sp===S.sport)){
     const ms=list.filter(m=>m.lg===lg.id);if(!ms.length)continue;
     h+=`<section class="panel group"><header class="gh">${leagueLogo(lg.id,24)}<span class="gt">${lg.name}</span><span class="gc">${lg.country}</span><button class="ga press" data-act="league" data-id="${lg.id}">Tabla ${ICON.chev}</button></header>${ms.map(m=>rowHtml(m,i++)).join('')}</section>`;
   }
@@ -1296,21 +1338,22 @@ function lineRows(roster,formation){
 }
 /* fotos de jugadores: ESPN casi no tiene de fútbol, así que se buscan en Wikipedia y se guardan en el dispositivo */
 const PH=store.get('spi.ph2',{});const phQ=new Set();let phRun=0,phSaveT;
-const PH_TTL=30*864e5;
-function photoFor(a){
-  const name=a?.displayName||a?.fullName;if(!name)return null;
+const PH_TTL=30*864e5;const PHSP=new Map();
+function photoFor(a,sp='soccer'){
+  const name=a?.displayName||a?.fullName;if(!name)return null;PHSP.set(name,sp);
   const e=PH[name];if(e&&Date.now()-e.t<PH_TTL)return e.u||null;
   if(!phQ.has(name)){phQ.add(name);pumpPhotos()}return null;
 }
 function pumpPhotos(){
   while(phRun<4&&phQ.size){const name=phQ.values().next().value;phQ.delete(name);phRun++;
-    fetchPhoto(name).then(u=>{PH[name]={u:u||'',t:Date.now()}}).catch(()=>{PH[name]={u:'',t:Date.now()-PH_TTL+864e5}}).finally(()=>{phRun--;clearTimeout(phSaveT);phSaveT=setTimeout(()=>{store.set('spi.ph2',PH);if(S.dtab==='lu')renderDetail(false)},350);pumpPhotos()})}
+    fetchPhoto(name,PHSP.get(name)).then(u=>{PH[name]={u:u||'',t:Date.now()}}).catch(()=>{PH[name]={u:'',t:Date.now()-PH_TTL+864e5}}).finally(()=>{phRun--;clearTimeout(phSaveT);phSaveT=setTimeout(()=>{store.set('spi.ph2',PH);if(S.dtab==='lu'||S.match&&LG[S.match.lg]?.sp==='tennis')renderDetail(false)},350);pumpPhotos()})}
 }
-async function fetchPhoto(name){
+async function fetchPhoto(name,sp='soccer'){
   // el título del artículo debe contener todas las partes del nombre, para no mostrar la foto de otra persona
   const toks=normS(name).replace(/[^a-z0-9 ]/g,' ').split(' ').filter(w=>w.length>1);
   const ok=title=>{const t=' '+normS(title).replace(/[^a-z0-9 ]/g,' ')+' ';return toks.every(w=>t.includes(' '+w+' '))};
-  for(const [host,kw] of [['es','futbolista'],['en','footballer']]){
+  const KW={soccer:['futbolista','footballer'],basketball:['baloncestista','basketball player'],tennis:['tenista','tennis player']}[sp]||['futbolista','footballer'];
+  for(const [host,kw] of [['es',KW[0]],['en',KW[1]]]){
     const r=await fetch(`https://${host}.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrsearch=${encodeURIComponent(name+' '+kw)}&gsrlimit=3&prop=pageimages|description&piprop=thumbnail&pithumbsize=160`).then(x=>x.json());
     const pages=Object.values(r?.query?.pages||{}).sort((a,b)=>(a.index||0)-(b.index||0));
     const p=pages.find(pg=>pg.thumbnail&&ok(pg.title)&&!/femenin|women|woman/i.test(pg.description||''));
@@ -1445,6 +1488,7 @@ function renderDetail(anim){
   const el=$('#detail');const st=el.scrollTop;
   if(!S.match){el.innerHTML=`<div class="empty-state" style="padding-top:60px"><strong>Elige un partido</strong>Marcador, incidencias, cuotas en vivo, pronóstico, estadísticas y alineaciones.</div>`;return}
   if(!anim&&S.detSkel)anim=true;S.detSkel=false;
+  if(LG[S.match.lg]?.sp==='tennis'){const tm=findMatch(S.match.lg,S.match.id);el.innerHTML=tm?detailTennis(tm,anim):`<div class="sheet-grab" aria-hidden="true"></div><div class="dbody">${skelBlock(200)}</div>`;el.scrollTop=anim?0:st;afterRender(el,anim);return}
   const lg=LG[S.match.lg];const base=findMatch(lg.id,S.match.id);
   const live=base&&(base.st==='live'||base.st==='ht');
   const ttl=live?20000:base&&base.st==='ft'?600000:120000;
@@ -1467,7 +1511,8 @@ function renderDetail(anim){
 /* ================= competición ================= */
 function sbCalendar(d){const cal=d?.leagues?.[0]?.calendar||[];if(!cal.length)return[];if(typeof cal[0]==='string')return cal;return cal.flatMap(c=>(c.entries||[]).map(e=>e.startDate)).filter(Boolean)}
 function viewLeague(anim){
-  const lg=LG[S.view.id];const tab=S.view.tab||'tb';
+  const lg=LG[S.view.id];
+  if(lg.sp==='tennis')return viewTennisLeague(lg,S.view.tab==='tour'?'tour':'rank',anim);const tab=S.view.tab||'tb';
   const tabs=lg.sp==='soccer'?[['tb','Clasificación'],...(lg.id==='arg.1'?[['anual','Tabla anual'],['prom','Promedios']]:[]),['res','Resultados'],['gol','Goleadores'],['ast','Asistencias'],['teams','Equipos']]:[['tb','Clasificación'],['res','Resultados'],['lead','Líderes'],['teams','Equipos']];
   const season=peek(URL.std(lg))?.seasons?.[0]?.displayName;
   let h=`<div class="panel"><div class="vhead">${leagueLogo(lg.id,56)}<div class="vt"><h1>${lg.name}</h1><div class="vs">${lg.country}${season?' · '+esc(season):''}</div></div></div>
@@ -1525,7 +1570,7 @@ function viewLeagues(){
   ${SPORTS.map(sp=>`<div class="lbl" style="margin-top:6px">${sp.name}</div><div class="lggrid">${LEAGUES.filter(l=>l.sp===sp.id).map(l=>{const n=liveCount(l);return `<button class="lgcard press" data-act="league" data-id="${l.id}">${leagueLogo(l.id,40)}<b>${l.name}</b><span class="sub">${l.country}${n?` · <span style="color:var(--live);font-weight:800">${n} en vivo</span>`:''}</span></button>`}).join('')}</div>`).join('')}`;
 }
 function viewSearch(){
-  return `<div class="panel"><div class="vhead" style="flex-direction:column;align-items:stretch"><h1>Buscar</h1><div class="search" style="display:block;max-width:none;margin:8px 0 0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q2" type="search" placeholder="Equipo, por ejemplo Boca o Lakers" autocomplete="off" autocapitalize="none" enterkeyhint="search" aria-label="Buscar equipo" value="${esc(S.q2||'')}"></div></div><div id="sres2" class="vbody" style="padding-top:0">${searchResults(S.q2||'')}</div></div>`;
+  return `<div class="panel"><div class="vhead" style="flex-direction:column;align-items:stretch"><h1>Buscar</h1><div class="search" style="display:block;max-width:none;margin:8px 0 0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q2" type="search" placeholder="Equipo o jugador: Boca, Messi, Alcaraz…" autocomplete="off" autocapitalize="none" enterkeyhint="search" aria-label="Buscar equipo" value="${esc(S.q2||'')}"></div></div><div id="sres2" class="vbody" style="padding-top:0">${searchResults(S.q2||'')}</div></div>`;
 }
 
 /* ================= equipo ================= */
@@ -1680,17 +1725,211 @@ function notifCard(){
 function viewFav(anim){
   const lgId=S.view.lg||'esp.1';const lg=LG[lgId];const c=need(URL.std(lg),600000);
   const favs=[...S.favs.values()];
-  let h=`<div class="panel"><div class="vhead"><div class="vt"><h1>Mis equipos</h1><div class="vs">Sus partidos salen primero y con estrella. Se guardan en este dispositivo.</div></div>${S.favs.size?`<button class="btn press" data-act="home">Ver partidos</button>`:''}</div>
+  let h=`<div class="panel"><div class="vhead"><div class="vt"><h1>Mis equipos</h1><div class="vs">Sus partidos salen primero y con estrella. Para seguir a un tenista, búscalo y toca «Seguir» en su ficha.</div></div>${S.favs.size?`<button class="btn press" data-act="home">Ver partidos</button>`:''}</div>
   ${favs.length?`<div class="vbody" style="padding-top:0"><div class="chips">${favs.map(t=>`<button class="chip press" data-act="team" data-k="${esc(t.k)}">${logo(t,18)}${esc(t.name)}</button>`).join('')}</div></div>`:''}</div>
   ${notifCard()}
   <div class="panel">
-  <nav class="vtabs" role="tablist" data-ind="flg"><span class="ind"></span>${LEAGUES.map(l=>{const n=favs.filter(f=>f.lg===l.id).length;return `<button role="tab" data-act="flg" data-id="${l.id}" aria-selected="${lgId===l.id}">${l.name}${n?` <span class="sub">(${n})</span>`:''}</button>`}).join('')}</nav>
+  <nav class="vtabs" role="tablist" data-ind="flg"><span class="ind"></span>${LEAGUES.filter(l=>l.sp!=='tennis').map(l=>{const n=favs.filter(f=>f.lg===l.id).length;return `<button role="tab" data-act="flg" data-id="${l.id}" aria-selected="${lgId===l.id}">${l.name}${n?` <span class="sub">(${n})</span>`:''}</button>`}).join('')}</nav>
   <div class="vbody">`;
   if(!c.data)h+=c.err?errBox(c.err,URL.std(lg)):skelBlock(300);
   else{const ts=standingsEntries(lgId).flatMap(g=>g.entries.map(e=>e.t)).sort((a,b)=>a.name.localeCompare(b.name));
     h+=ts.length?`<div class="pgrid ${anim?'enter':''}">${ts.map(t=>`<button class="pteam press" data-act="fav" data-k="${esc(t.k)}" aria-pressed="${S.favs.has(t.k)}">${logo(t,32)}<span class="nm">${esc(t.name)}</span><span class="ck">${S.favs.has(t.k)?ICON.check:''}</span></button>`).join('')}</div>`:`<div class="empty-state">No hay equipos disponibles para esta competición.</div>`}
   return h+`</div></div>`;
 }
+
+/* ================= tenis ================= */
+const NT=new WeakMap();
+const ROUNDS=[[/^final$/i,'Final'],[/semifinal/i,'Semifinal'],[/quarterfinal/i,'Cuartos de final'],[/round of 16/i,'Octavos de final'],[/round of 32/i,'Dieciseisavos'],[/round of 64/i,'Treintaidosavos'],[/qualifying final/i,'Clasificación · final'],[/qualifying (\d)\w* round/i,'Clasificación · $1.ª ronda'],[/(\d)\w* round/i,'$1.ª ronda']];
+const trRound=r=>{r=r||'';for(const [re,t] of ROUNDS)if(re.test(r))return r.replace(new RegExp('^.*'+re.source+'.*$','i'),t);return r};
+function player(a,lg){
+  if(!a)return{k:'?',id:'?',name:'Por definir',short:'',logo:'',lg:lg.id,sp:'tennis',player:true};
+  const fl=flagUrl(a.flag?.href);const o={k:'tennis:'+a.id,id:String(a.id),name:a.displayName||a.fullName||'',short:a.shortName||a.lastName||a.displayName||'',logo:a.flag?.href||'',flag:fl,country:a.flag?.alt||'',headshot:a.headshot?.href||'',lg:lg.id,sp:'tennis',player:true};
+  PLAYERS.set(o.k,{...(PLAYERS.get(o.k)||{}),...o,headshot:o.headshot||PLAYERS.get(o.k)?.headshot||''});return PLAYERS.get(o.k);
+}
+const PLAYERS=new Map();
+// banderas pequeñas a través del redimensionador de ESPN
+function flagUrl(u){return u&&u.startsWith(CDN)?rs(u.slice(CDN.length),48):(u||'')}
+function tennisMatches(lg,data){
+  const out=[];
+  for(const ev of data?.events||[])for(const g of ev.groupings||[]){
+    const gname=g.grouping?.displayName||'';const dbl=/doubles/i.test(gname);
+    for(const c of g.competitions||[]){
+      if(NT.has(c)){out.push(NT.get(c));continue}
+      const ps=(c.competitors||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0));const P1=ps[0]||{},P2=ps[1]||{};
+      const nameOf=p=>p.athlete?p.athlete:{id:p.id,displayName:(p.roster?.athletes||[]).map(x=>x.shortName||x.displayName).join(' / ')||p.displayName,flag:p.roster?.athletes?.[0]?.flag};
+      const home=player(nameOf(P1),lg),away=player(nameOf(P2),lg);
+      const t=c.status?.type||{};const n=t.name||'';
+      const ls=[P1,P2].map(p=>(p.linescores||[]).map(l=>({v:num(l.value),tb:num(l.tiebreak)})));
+      const nSets=Math.max(ls[0].length,ls[1].length);const sets=[];
+      for(let i=0;i<nSets;i++)sets.push({h:ls[0][i]?.v,a:ls[1][i]?.v,htb:ls[0][i]?.tb,atb:ls[1][i]?.tb});
+      const live=t.state==='in';
+      const done=i=>!live||i<nSets-1;
+      let hs=0,as=0;sets.forEach((x,i)=>{if(done(i)&&x.h!=null&&x.a!=null&&x.h!==x.a){x.h>x.a?hs++:as++}});
+      let st='pre',label='';
+      if(/WALKOVER/.test(n)){st='ft';label='W.O.'}else if(/RETIRED/.test(n)){st='ft';label='Retirada'}
+      else if(/POSTPONED|CANCELED|SUSPENDED|DELAYED/.test(n)){st='pst';label={STATUS_POSTPONED:'Aplazado',STATUS_CANCELED:'Cancelado',STATUS_SUSPENDED:'Suspendido',STATUS_DELAYED:'Retrasado'}[n]||'Aplazado'}
+      else if(t.state==='in'){st='live';label=nSets?`Set ${nSets}`:'En juego'}else if(t.state==='post'){st='ft';label='Final'}
+      const m={id:String(c.id),lg:lg.id,sp:'tennis',ko:Date.parse(c.date||ev.date),home,away,hs:st==='pre'||st==='pst'?null:hs,as:st==='pre'||st==='pst'?null:as,st,label,red:[0,0],
+        win:st==='ft'?(P1.winner?'h':P2.winner?'a':null):null,sets,live,round:trRound(c.round?.displayName),tour:ev.name,evId:ev.id,major:!!ev.major,dbl,venue:c.venue?.fullName||ev.venue?.fullName||'',
+        seed:[P1.curatedRank?.current||P1.seed,P2.curatedRank?.current||P2.seed],note:(c.notes||[])[0]?.text||'',rec:[null,null],pen:[null,null],odds:null};
+      NT.set(c,m);out.push(m);
+    }
+  }
+  return out;
+}
+function setsCells(m,side){
+  return m.sets.map((x,i)=>{const v=side==='h'?x.h:x.a,o=side==='h'?x.a:x.h,tb=side==='h'?x.htb:x.atb;const cur=m.live&&i===m.sets.length-1;const won=v!=null&&o!=null&&v>o&&!cur;
+    return `<span class="set ${won?'w':''} ${cur?'cur':''}">${v??''}${tb!=null&&v<o?`<sup>${tb}</sup>`:''}</span>`}).join('');
+}
+function rowTennis(m,i=0){
+  const sel=S.match&&S.match.id===m.id;const key=m.sets.map(x=>x.h+'-'+x.a).join(',');const prev=S.lastScore.get(m.id);
+  const changed=prev!==undefined&&prev!==key&&m.st==='live';S.lastScore.set(m.id,key);
+  const o=side=>m.win==null?'':m.win===side?'win':'lose';
+  const tm=(t,side,seed)=>`<span class="rt ${o(side)}">${t.flag?`<img class="flag" src="${esc(t.flag)}" alt="" loading="lazy">`:'<span class="flag"></span>'}<span class="nm">${esc(t.name)}${seed?` <span class="sub">(${seed})</span>`:''}</span>${S.favs.has(t.k)?`<span class="favstar">${ICON.star(true,11)}</span>`:''}${m.live&&m.win==null?'':''}</span>`;
+  return `<button class="row trow ${sel?'sel':''} ${changed?'flash':''}" style="--i:${i}" data-act="match" data-id="${m.id}" data-lg="${m.lg}">
+    <span class="rst ${m.st}">${esc(m.st==='pre'?hm(m.ko):m.label)}<small class="sub">${esc(m.round)}</small></span>
+    <span class="rteams">${tm(m.home,'h',m.seed[0])}${tm(m.away,'a',m.seed[1])}</span><span></span>
+    <span class="tsets"><span class="tsl">${setsCells(m,'h')}</span><span class="tsl">${setsCells(m,'a')}</span></span></button>`;
+}
+function detailTennis(m,anim){
+  const live=m.st==='live';
+  const ph=(t,side)=>{const pl=PLAYERS.get(t.k)||t;const img=pl.headshot||photoFor({displayName:t.name});
+    return `<button class="tlogo press" data-act="player" data-id="${esc(t.id)}" data-sp="tennis" data-lg="${m.lg}" aria-label="Ver ficha de ${esc(t.name)}">${img?`<img class="tphoto" src="${esc(img)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'tphoto'}))">`:`<span class="tphoto"></span>`}</button>`};
+  let h=`<div class="sheet-grab" aria-hidden="true"></div><div class="dh"><div class="dmeta"><button class="lnk" data-act="league" data-id="${m.lg}">${leagueLogo(m.lg,18)}${esc(m.tour)}</button><span>${esc(m.round)}</span><span>· ${fmtDay(dkey(m.ko))}, ${hm(m.ko)}</span><button class="xbtn press" data-act="close" aria-label="Cerrar">${ICON.x}</button></div>
+   <div class="dscore"><div class="dteam">${ph(m.home)}<button class="tn" data-act="player" data-id="${esc(m.home.id)}" data-sp="tennis" data-lg="${m.lg}">${m.home.flag?`<img class="flag" src="${esc(m.home.flag)}" alt=""> `:''}${esc(m.home.name)}</button>${m.seed[0]?`<span class="rec">Cabeza de serie ${m.seed[0]}</span>`:''}${m.dbl?'':favBtn(m.home)}</div>
+   <div class="dmid"><div class="big ${m.st==='pre'||m.st==='pst'?'pre':live?'live':''}">${m.st==='pre'||m.st==='pst'?hm(m.ko):`${m.hs}<span style="opacity:.4;margin:0 .08em">:</span>${m.as}`}</div><div class="dst ${m.st}">${live?'<span class="dot pulse"></span>':''}${m.st==='pre'?fmtDay(dkey(m.ko)):esc(m.label)}</div><div class="sub">sets</div></div>
+   <div class="dteam">${ph(m.away)}<button class="tn" data-act="player" data-id="${esc(m.away.id)}" data-sp="tennis" data-lg="${m.lg}">${m.away.flag?`<img class="flag" src="${esc(m.away.flag)}" alt=""> `:''}${esc(m.away.name)}</button>${m.seed[1]?`<span class="rec">Cabeza de serie ${m.seed[1]}</span>`:''}${m.dbl?'':favBtn(m.away)}</div></div></div>`;
+  h+=`<div class="dbody ${anim?'enter':''}">`;
+  if(m.sets.length)h+=`<div class="sec"><h4>Resultado por sets</h4><div class="tw"><table class="tb"><thead><tr><th class="l">Jugador</th>${m.sets.map((_,i)=>`<th>Set ${i+1}</th>`).join('')}</tr></thead><tbody>${['h','a'].map(sd=>{const t=sd==='h'?m.home:m.away;return `<tr><td class="l"><b>${esc(t.short||t.name)}</b>${m.win===sd?' ✓':''}</td>${m.sets.map((x,i)=>{const v=sd==='h'?x.h:x.a,o2=sd==='h'?x.a:x.h,tb=sd==='h'?x.htb:x.atb;return `<td class="${v>o2?'pts':''}">${v??''}${tb!=null?`<sup>${tb}</sup>`:''}</td>`}).join('')}</tr>`}).join('')}</tbody></table></div></div>`;
+  // ranking de cada jugador
+  const rk=need(URL.rank(LG[m.lg]),3600000);const ranks=rk.data?.rankings?.[0]?.ranks||[];const rkOf=t=>ranks.find(r=>String(r.athlete?.id)===t.id);
+  const a=rkOf(m.home),b=rkOf(m.away);
+  if(!m.dbl&&(a||b))h+=`<div class="sec"><h4>Ranking ${m.lg.toUpperCase()}</h4><div class="kv"><span>${a?a.current+'º':'–'}</span><span class="k">Puesto</span><span class="v2">${b?b.current+'º':'–'}</span><span>${a?a.points.toLocaleString('es-ES'):'–'}</span><span class="k">Puntos</span><span class="v2">${b?b.points.toLocaleString('es-ES'):'–'}</span></div></div>`;
+  if(!m.dbl&&a&&b){const pa=a.points/(a.points+b.points);h+=`<div class="sec"><h4>Favorito según el ranking</h4>${probBar([pa,1-pa],[m.home.short||m.home.name,m.away.short||m.away.name])}<p class="foot" style="padding:6px 0 0">Reparto aproximado según los puntos del ranking de cada jugador.</p></div>`}
+  h+=`<div class="sec"><h4>Información</h4><div class="info"><div><span>Torneo</span><span>${esc(m.tour)}</span></div><div><span>Ronda</span><span>${esc(m.round)}</span></div>${m.venue?`<div><span>Sede</span><span>${esc(m.venue)}</span></div>`:''}<div><span>Inicio</span><span>${fmtDay(dkey(m.ko))}, ${hm(m.ko)}</span></div>${m.note?`<div><span>Resultado</span><span>${esc(m.note.replace(/ bt /,' venció a '))}</span></div>`:''}</div></div>`;
+  if(!m.dbl)h+=`<div class="nactions" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost press" data-act="player" data-id="${esc(m.home.id)}" data-sp="tennis" data-lg="${m.lg}">Ficha de ${esc(m.home.short||m.home.name)}</button><button class="btn ghost press" data-act="player" data-id="${esc(m.away.id)}" data-sp="tennis" data-lg="${m.lg}">Ficha de ${esc(m.away.short||m.away.name)}</button></div>`;
+  return h+'</div>';
+}
+function viewTennisLeague(lg,tab,anim){
+  let h=`<div class="panel"><div class="vhead">${leagueLogo(lg.id,56)}<div class="vt"><h1>${lg.name}</h1><div class="vs">Tenis · ${lg.country}</div></div></div>
+  <nav class="vtabs" role="tablist" data-ind="ltab"><span class="ind"></span>${[['rank','Ranking'],['tour','Torneos']].map(([k,l])=>`<button role="tab" data-act="ltab" data-id="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}</nav></div><div class="panel">`;
+  if(tab==='rank'){const c=need(URL.rank(lg),3600000);
+    if(!c.data)return h+(c.err?errBox(c.err,URL.rank(lg)):`<div class="vbody">${skelBlock(420)}</div>`)+'</div>';
+    const ranks=c.data.rankings?.[0]?.ranks||[];
+    h+=`<div class="tw"><table class="tb"><thead><tr><th>#</th><th class="l">Jugador</th><th>Puntos</th><th class="hm">Antes</th></tr></thead><tbody>${ranks.slice(0,S.view.rn||50).map(r=>{const a=r.athlete||{};const t=player(a,lg);const mv=(r.previous||r.current)-r.current;
+      return `<tr class="${S.favs.has(t.k)?'fav':''}"><td class="pos">${r.current}${mv?`<span class="mv ${mv>0?'up':'dn'}">${mv>0?'▲':'▼'}${Math.abs(mv)}</span>`:''}</td><td class="l"><span class="tcell">${t.flag?`<img class="flag" src="${esc(t.flag)}" alt="">`:''}<button class="tnm" data-act="player" data-id="${esc(t.id)}" data-sp="tennis" data-lg="${lg.id}">${esc(t.name)}</button>${S.favs.has(t.k)?`<span style="color:var(--amber);display:inline-flex">${ICON.star(true,11)}</span>`:''}</span></td><td class="pts">${(r.points||0).toLocaleString('es-ES')}</td><td class="hm">${r.previous||''}</td></tr>`}).join('')}</tbody></table></div>
+      ${ranks.length>(S.view.rn||50)?`<div class="vbody" style="text-align:center"><button class="btn ghost press" data-act="rmore">Ver más</button></div>`:''}`;
+  } else {
+    const c=need(URL.sb(lg),300000);if(!c.data)return h+(c.err?errBox(c.err,URL.sb(lg)):`<div class="vbody">${skelBlock(300)}</div>`)+'</div>';
+    const evs=c.data.events||[];const ms=tennisMatches(lg,c.data);
+    h+=`<div class="mlist" style="padding:6px 10px">${evs.map(ev=>{const fin=ms.find(x=>x.evId===ev.id&&!x.dbl&&x.round==='Final');const champ=fin&&fin.st==='ft'?(fin.win==='h'?fin.home:fin.away):null;
+      return `<div class="mrow"><span class="md">${fmtDate(Date.parse(ev.date))}<br>${ev.endDate?'al '+fmtDate(Date.parse(ev.endDate)):''}</span><span class="vs2" style="flex-direction:column;align-items:flex-start;gap:2px"><b>${esc(ev.name)}</b><span class="sub">${esc(ev.venue?.fullName||'')}${ev.major?' · Grand Slam':''}</span></span><span class="res" style="font-size:13px;font-family:var(--f-body)">${champ?`🏆 ${esc(champ.name)}`:ev.status?.type?.state==='post'?'Terminado':'En curso'}</span></div>`}).join('')||'<div class="empty-state">No hay torneos esta semana.</div>'}</div>`;
+  }
+  return h+'</div>';
+}
+
+/* ================= jugadores: buscador y ficha ================= */
+const WAPI='https://site.web.api.espn.com/apis/common/v3/';
+const SPORT_OK=new Set(['soccer','basketball','tennis']);
+const athletePath=(sp,lg)=>sp==='soccer'?'soccer':sp==='basketball'?`basketball/${lg||'nba'}`:`tennis/${lg||'atp'}`;
+URL.psearch=q=>`${WAPI}search?query=${encodeURIComponent(q)}&type=player&limit=20`;
+URL.ath=(sp,lg,id,part)=>`${WAPI}sports/${athletePath(sp,lg)}/athletes/${id}${part?'/'+part:''}`;
+URL.rank=lg=>`${API}tennis/${lg.id}/rankings`;
+function playerHits(q){
+  if(q.trim().length<3)return null;const c=need(URL.psearch(q.trim()),600000);if(!c.data)return c.err?[]:null;
+  return (c.data.items||[]).filter(i=>SPORT_OK.has(i.sport)&&(i.sport!=='basketball'||i.league==='nba'||i.league==='wnba')).slice(0,10);
+}
+function playerHitHtml(i){const team=(i.teamRelationships||[])[0]?.displayName||'';const lgn=(i.leagueRelationships||[])[0]?.displayName||i.league||'';
+  const img=i.headshot?.href||'';const sp={soccer:'Fútbol',basketball:'Baloncesto',tennis:'Tenis'}[i.sport];
+  return `<button class="phit press" data-act="player" data-id="${esc(i.id)}" data-sp="${esc(i.sport)}" data-lg="${esc(i.league||i.defaultLeagueSlug||'')}">${img?`<img class="phimg" src="${esc(img)}" alt="" loading="lazy">`:`<span class="phimg">${i.flag?.href?`<img src="${esc(flagUrl(i.flag.href))}" alt="">`:''}</span>`}<span class="phtx"><b>${esc(i.displayName)}</b><span class="sub">${sp}${team?' · '+esc(team):lgn?' · '+esc(lgn):''}${i.citizenshipCountry?.abbreviation?' · '+esc(i.citizenshipCountry.abbreviation):''}</span></span>${ICON.chev}</button>`}
+// Wikipedia en español: resumen de la carrera y secciones de palmarés
+const WKW={soccer:'futbolista',basketball:'baloncestista',tennis:'tenista'};
+const WIKI='https://es.wikipedia.org/w/api.php?format=json&formatversion=2&origin=*&';
+function wikiTitle(name,sp){
+  const c=need(`${WIKI}action=query&list=search&srlimit=5&srsearch=${encodeURIComponent(name+' '+WKW[sp])}`,86400000);if(!c.data)return c.err?'':null;
+  const toks=normS(name).replace(/[^a-z0-9 ]/g,' ').split(' ').filter(w=>w.length>1);const last=toks[toks.length-1];
+  const ok=t=>{const x=' '+normS(t).replace(/[^a-z0-9 ]/g,' ')+' ';return toks.filter(w=>x.includes(' '+w+' ')).length>=Math.min(2,toks.length)&&x.includes(' '+last+' ')};
+  return (c.data.query?.search||[]).find(r=>ok(r.title))?.title||'';
+}
+function sanitizeWiki(html,skip=''){
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  doc.querySelectorAll('sup,style,script,.mw-editsection,.reference,.noprint,.navbox,.mw-empty-elt,figure,.thumb,.hatnote,.metadata').forEach(n=>n.remove());
+  const root=doc.querySelector('.mw-parser-output')||doc.body;let out='',lists=0;
+  // Wikipedia ordena las medallas con claves ocultas («02 !»): se cambian por el emoji
+  const MED={1:'🥇',2:'🥈',3:'🥉'};
+  const txt=n=>n.textContent.replace(/\s+/g,' ').replace(/\[\d+\]/g,'').trim().replace(/^0?([123])\s*!\s*/,(_,d)=>MED[d]+' ');
+  for(const n of root.children){
+    if(/^H[2-5]$/.test(n.tagName)||n.classList.contains('mw-heading')){const t=txt(n);if(t&&!/^(palmar|t[ií]tulos)/i.test(t)&&normS(t)!==normS(skip))out+=`<h5>${esc(t)}</h5>`;continue}
+    if(n.tagName==='UL'||n.tagName==='OL'){const items=[...n.querySelectorAll(':scope > li')].map(txt).filter(Boolean).slice(0,40);if(items.length){out+=`<ul class="wl">${items.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`;lists++}continue}
+    if(n.tagName==='TABLE'){
+      // tablas de maquetación: se procesan las tablas de dentro y se omiten las leyendas
+      const tbls=n.querySelector('table')?[...n.querySelectorAll('table')].filter(t=>!t.querySelector('table')):[n];
+      for(const tb of tbls){if(/^s*(leyenda|t[ií]tulos por superficie|t[ií]tulos por)/i.test(txt(tb)))continue;
+      const rows=[...tb.querySelectorAll(':scope > tbody > tr, :scope > thead > tr, :scope > tr')].slice(0,40).map(tr=>[...tr.children].map(td=>({h:td.tagName==='TH',t:txt(td),cs:+td.getAttribute('colspan')||1})));
+      if(rows.length)out+=`<div class="tw"><table class="tb wt">${rows.map(r=>`<tr>${r.map(c=>`<${c.h?'th':'td'} ${c.cs>1?`colspan="${c.cs}"`:''} class="l">${esc(c.t)}</${c.h?'th':'td'}>`).join('')}</tr>`).join('')}</table></div>`;lists++}continue}
+    if(n.tagName==='P'){const t=txt(n);if(t)out+=`<p class="wp">${esc(t)}</p>`}
+  }
+  return lists?out:'';
+}
+function wikiSections(title){
+  const c=need(`${WIKI}action=parse&prop=sections&redirects=1&page=${encodeURIComponent(title)}`,86400000);if(!c.data)return null;
+  const secs=(c.data.parse?.sections||[]).filter(s=>s.toclevel===1&&/palmar|t[ií]tulos|grand slam|distinciones|logros|premios/i.test(s.line)&&!/estad/i.test(s.line)).slice(0,4);
+  return secs.map(s=>{const r=need(`${WIKI}action=parse&prop=text&redirects=1&page=${encodeURIComponent(title)}&section=${s.index}`,86400000);return{line:s.line,html:r.data?sanitizeWiki(r.data.parse?.text||'',s.line):null,loading:!r.data&&!r.err}});
+}
+function viewPlayer(anim){
+  const {id,sp}=S.view;const lg=S.view.lg||'';
+  const ac=need(URL.ath(sp,lg,id),3600000);
+  if(!ac.data)return ac.err?`<div class="panel">${errBox(ac.err,URL.ath(sp,lg,id))}</div>`:`<div class="panel vbody">${skelBlock(160)}</div>${skelBlock(260)}`;
+  const a=ac.data.athlete||{};const bio=sp==='tennis'?null:need(URL.ath(sp,lg,id,'bio'),3600000);const stc=sp==='tennis'?null:need(URL.ath(sp,lg,id,'stats'),3600000);
+  const title=wikiTitle(a.displayName||a.fullName,sp);
+  const sum=title?need(`https://es.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title.replace(/ /g,'_'))}`,86400000):null;
+  const photo=a.headshot?.href||sum?.data?.thumbnail?.source||'';
+  const k=sp+':'+id;const pk=sp==='tennis'?'tennis:'+id:null;
+  const tennisLg=sp==='tennis'?LG[lg]||LG.atp:null;const rk=tennisLg?need(URL.rank(tennisLg),3600000):null;const myRank=(rk?.data?.rankings?.[0]?.ranks||[]).find(r=>String(r.athlete?.id)===String(id));
+  const teamLink=a.team&&sp!=='tennis'?(()=>{const lgId=sp==='basketball'?'nba':(LEAGUES.find(l=>l.sp==='soccer'&&[...TEAMS.values()].some(t=>t.id===String(a.team.id)&&t.lg===l.id))?.id);const tk=sp+':'+a.team.id;return TEAMS.has(tk)?`<button class="lnk" data-act="team" data-k="${esc(tk)}">${esc(a.team.displayName)}</button>`:esc(a.team.displayName)})():'';
+  const favT=pk?{k:pk,name:a.displayName,short:a.shortName||a.lastName,logo:a.flag?.href||'',flag:a.flag?.href||'',lg:tennisLg.id,sp:'tennis',id:String(id),player:true}:null;
+  if(favT&&!PLAYERS.has(pk))PLAYERS.set(pk,{...favT,headshot:photo});
+  let h=`<div class="panel"><div class="vhead">${photo?`<img class="pphoto" src="${esc(photo)}" alt="">`:`<span class="pphoto"></span>`}<div class="vt"><h1>${esc(a.displayName||'')}</h1><div class="vs">${a.flag?.href?`<img class="flag" src="${esc(flagUrl(a.flag.href))}" alt=""> `:''}${esc(a.citizenship||a.citizenshipCountry?.name||a.flag?.alt||'')}${a.position?.displayName?' · '+esc(trPos(a.position.displayName)):''}${teamLink?' · '+teamLink:''}${myRank?` · ${myRank.current}º del ranking ${tennisLg.name}`:''}</div></div>${favT?`<button class="star press" data-act="favp" data-k="${esc(pk)}" aria-pressed="${S.favs.has(pk)}">${ICON.star(S.favs.has(pk))}${S.favs.has(pk)?'Siguiendo':'Seguir'}</button>`:''}</div></div>`;
+  const tiles=[];
+  if(a.age)tiles.push([a.age,'Edad'+(a.displayDOB?` · ${esc(a.displayDOB)}`:'')]);
+  if(a.displayBirthPlace)tiles.push([`<span style="font-size:20px">${esc(a.displayBirthPlace)}</span>`,'Lugar de nacimiento']);
+  if(a.displayHeight)tiles.push([toCm(a.displayHeight),'Altura']);
+  if(myRank)tiles.push([myRank.points.toLocaleString('es-ES'),'Puntos de ranking']);
+  else if(a.displayWeight)tiles.push([toKg(a.displayWeight),'Peso']);
+  if(a.debutYear)tiles.push([a.debutYear,'Debut como profesional']);
+  if(a.jersey&&tiles.length<4)tiles.push(['#'+esc(a.jersey),'Dorsal']);
+  if(tiles.length)h+=`<div class="tiles ${anim?'enter':''}">${tiles.slice(0,4).map(([v,l])=>`<div class="tile"><div class="tv">${v}</div><div class="tl2">${l}</div></div>`).join('')}</div>`;
+  // trayectoria
+  if(sum?.data?.extract)h+=`<div class="panel card"><h3><span>Trayectoria</span><a class="lnk" href="${esc(sum.data.content_urls?.mobile?.page||'https://es.wikipedia.org/wiki/'+encodeURIComponent(title))}" target="_blank" rel="noopener" style="color:var(--accent-2);text-transform:none;letter-spacing:0;font-size:12px">Leer en Wikipedia ↗</a></h3><p class="wp" style="margin:0">${esc(sum.data.extract)}</p></div>`;
+  else if(title===null||sum?.p)h+=`<div class="panel card">${skelBlock(100)}</div>`;
+  // clubes / equipos
+  const th=bio?.data?.teamHistory||[];
+  if(th.length)h+=`<div class="panel card"><h3>${sp==='soccer'?'Clubes y selección':'Equipos'}</h3><div class="mlist">${th.map(t=>{const lgo=t.logo;const seas=String(t.seasons||'').split(', ');const span=seas.length>1?seas[0].split('-')[0]+'–'+seas[seas.length-1].split('-').pop():t.seasons;
+    return `<div class="mrow" style="grid-template-columns:40px minmax(0,1fr) auto">${lgo?pic(rs(lgo.replace(CDN,''),80),null,28):'<span></span>'}<span class="vs2"><b>${esc(t.displayName)}</b></span><span class="sub">${esc(String(span).replace('CURRENT','actualidad'))}</span></div>`}).join('')}</div></div>`;
+  // títulos y premios
+  const aw=bio?.data?.awards||[];
+  const secs=title?wikiSections(title):null;
+  let tit='';
+  if(aw.length)tit+=`<h5>Premios ${sp==='basketball'?'NBA':''}</h5><div class="awards">${aw.map(x=>`<span class="aw"><b>${esc(x.displayCount||'')}</b> ${esc(trAward(x.name))}<small>${esc((x.seasons||[]).join(', '))}</small></span>`).join('')}</div>`;
+  if(secs)for(const s of secs){if(s.loading){tit+=skelBlock(80);continue}if(s.html)tit+=`<h5>${esc(s.line)}</h5>${s.html}`}
+  if(tit)h+=`<div class="panel card wiki"><h3><span>Títulos y distinciones</span>${title?'<span class="k">Wikipedia · ESPN</span>':''}</h3>${tit}</div>`;
+  else if(title===null||(secs===null&&title))h+=`<div class="panel card">${skelBlock(140)}</div>`;
+  // estadísticas
+  const cats=(stc?.data?.categories||[]).slice(0,2);
+  for(const c of cats){const rows=(c.statistics||[]).slice().reverse().slice(0,12);if(!rows.length)continue;const labels=c.labels||[];
+    h+=`<div class="panel"><div class="card" style="padding-bottom:0"><h3>${esc(trCat(c.displayName||c.name||'Estadísticas'))}</h3></div><div class="tw"><table class="tb"><thead><tr><th class="l">Temporada</th>${labels.map(l=>`<th>${esc(trLabel(l))}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr><td class="l">${esc(r.season?.displayName||r.season?.year||'')}${r.teamSlug?` <span class="sub">${esc(r.teamSlug.split('.').pop().replace(/[-_]/g,' '))}</span>`:''}</td>${(r.stats||[]).map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}${c.totals?`<tr><td class="l"><b>Total</b></td>${c.totals.map(v=>`<td class="pts">${esc(v)}</td>`).join('')}</tr>`:''}</tbody></table></div></div>`}
+  // tenis: partidos de esta semana
+  if(sp==='tennis'){const ms=[];for(const l of LEAGUES.filter(x=>x.sp==='tennis'))for(const u of URL.sbs(l,today()))for(const m of matchesOf(l,peek(u)))if(m.home.id===String(id)||m.away.id===String(id))ms.push(m);
+    if(ms.length)h+=`<div class="panel group"><header class="gh"><span class="gt">Partidos de hoy</span></header>${ms.map((m,i)=>rowTennis(m,i)).join('')}</div>`}
+  h+=`<p class="note">Datos de ESPN y biografía de Wikipedia en español.</p>`;
+  return h;
+}
+const trPos=p=>({Forward:'Delantero',Midfielder:'Centrocampista',Defender:'Defensa',Goalkeeper:'Portero','Center':'Pívot','Guard':'Base/Escolta','Forward-Center':'Ala-pívot','Point Guard':'Base','Shooting Guard':'Escolta','Small Forward':'Alero','Power Forward':'Ala-pívot'})[p]||p;
+const trCat=c=>c.replace('Regular Season Averages','Promedios por temporada (fase regular)').replace('Regular Season Totals','Totales por temporada (fase regular)').replace(/^offensive$/i,'Estadísticas por temporada');
+const trLabel=l=>({STRT:'Tit.',FC:'Faltas',FA:'Recib.',YC:'Amar.',RC:'Rojas',G:'Goles',A:'Asist.',SHOT:'Tiros',SOG:'A puerta',OF:'F. juego',GP:'PJ',GS:'Tit.',MIN:'Min',REB:'Reb',AST:'Ast',BLK:'Tap',STL:'Rob',PF:'Faltas',TO:'Pérd.',PTS:'Pts',OR:'R.of',DR:'R.def',FG:'TC','FG%':'TC%','3PT':'T3','3P%':'T3%',FT:'TL','FT%':'TL%'})[l]||l;
+const trAward=n=>n.replace('All-NBA','Quinteto ideal NBA').replace('1st Team','(1.º)').replace('2nd Team','(2.º)').replace('3rd Team','(3.º)').replace('Finals MVP','MVP de las Finales').replace(/^MVP$/,'MVP de la temporada').replace('All-Rookie','Quinteto de novatos').replace('Rookie of the Year','Novato del año').replace('Defensive Player of the Year','Mejor defensor del año').replace('All-Star','All-Star').replace('Western Conference Finals MVP','MVP de la final del Oeste').replace('Eastern Conference Finals MVP','MVP de la final del Este');
+function toCm(h){const m=String(h).match(/(\d+)'\s*(\d+)/);return m?Math.round((+m[1]*12+ +m[2])*2.54)+' cm':esc(h)}
+function toKg(w){const m=String(w).match(/(\d+)/);return m?Math.round(+m[1]*.4536)+' kg':esc(w)}
 
 /* ================= orquestación ================= */
 function afterRender(root,anim){
@@ -1708,13 +1947,13 @@ function renderMain(anim){
   const v=S.view.type;const el=$('#main');
   if(!anim&&S.mainSkel)anim=true;
   if(v==='search'&&!anim&&document.activeElement?.id==='q2'){$('#sres2').innerHTML=searchResults($('#q2').value);return}
-  el.innerHTML=v==='league'?viewLeague(anim):v==='team'?viewTeam(anim):v==='fav'?viewFav(anim):v==='leagues'?viewLeagues():v==='search'?viewSearch():v==='news'?viewNews(anim):viewMatches();
+  el.innerHTML=v==='league'?viewLeague(anim):v==='team'?viewTeam(anim):v==='fav'?viewFav(anim):v==='leagues'?viewLeagues():v==='search'?viewSearch():v==='news'?viewNews(anim):v==='player'?viewPlayer(anim):viewMatches();
   S.mainSkel=!!el.querySelector('.skel');
   el.classList.toggle('stagger',!!anim&&v==='matches');
   if(anim&&v!=='matches'){el.classList.remove('enter');void el.offsetWidth;el.classList.add('enter')}else if(!anim)el.classList.remove('enter');
   afterRender(el,anim);
 }
-function renderAll(anim){renderHead();renderSide();afterRender($('#side'),anim);renderTabbar();renderMain(anim);renderDetail(false)}
+function renderAll(anim){if(!$('#sres').hidden)renderSearch();renderHead();renderSide();afterRender($('#side'),anim);renderTabbar();renderMain(anim);renderDetail(false)}
 function autoSelect(){
   if(S.match||!wide())return;
   const {out}=dayMatches(S.sport,S.date);if(!out.length)return;
@@ -1735,6 +1974,9 @@ document.addEventListener('click',e=>{
     case 'brand':S.dateT=Date.now();S.date=today();S.filter='all';if(wide())S.match=null;go({type:'matches'});break;
     case 'leagues':go({type:'leagues'});break;
     case 'newsview':go({type:'news'});break;
+    case 'player':$('#sres').hidden=true;go({type:'player',id,sp:b.dataset.sp,lg:b.dataset.lg});break;
+    case 'rmore':S.view.rn=(S.view.rn||50)+50;renderMain(false);break;
+    case 'favp':{const k=b.dataset.k;const p=PLAYERS.get(k);if(S.favs.has(k))S.favs.delete(k);else if(p)S.favs.set(k,{k,name:p.name,short:p.short,logo:p.flag||p.logo,flag:p.flag,lg:p.lg,sp:'tennis',id:p.id,player:true});saveFavs();renderHead();renderSide();renderMain(false);break}
     case 'nsrc':S.view.src=id;renderMain(true);break;
     case 'searchview':go({type:'search'});setTimeout(()=>$('#q2')?.focus(),60);break;
     case 'opensearch':go({type:'search'});setTimeout(()=>$('#q2')?.focus(),60);break;
@@ -1753,11 +1995,11 @@ document.addEventListener('click',e=>{
     case 'tblive':S.tbLive=id==='1';renderMain(false);renderDetail(false);break;
     case 'cal':S.view.ci=+id;renderMain(true);break;
     case 'lsort':S.view.sort=id;renderMain(false);break;
-    case 'team':{const k=b.dataset.k;const t=TEAMS.get(k)||S.favs.get(k);if(!t)break;if(t.sp!==S.sport){S.sport=t.sp;store.set('spi.sport',t.sp)}
+    case 'team':{const k=b.dataset.k;const t=TEAMS.get(k)||S.favs.get(k)||PLAYERS.get(k);if(!t)break;if(t.player){go({type:'player',id:t.id,sp:'tennis',lg:t.lg});break}if(t.sp!==S.sport){S.sport=t.sp;store.set('spi.sport',t.sp)}
       const lgId=b.dataset.lg&&!LG[b.dataset.lg].cup?b.dataset.lg:t.lg;$('#sres').hidden=true;$('#q').value='';go({type:'team',k,lg:lgId});break}
     case 'favview':go({type:'fav',lg:S.sport==='basketball'?'nba':(S.view.type==='league'?S.view.id:S.view.type==='team'?(S.view.lg||'esp.1'):'esp.1')});break;
     case 'flg':S.view.lg=id;renderMain(true);break;
-    case 'fav':{const k=b.dataset.k;const t=TEAMS.get(k);if(S.favs.has(k))S.favs.delete(k);else if(t)S.favs.set(k,{k,name:t.name,short:t.short,logo:t.logo,lg:t.lg,sp:t.sp,id:t.id});saveFavs();
+    case 'fav':{const k=b.dataset.k;const t=TEAMS.get(k)||PLAYERS.get(k);if(S.favs.has(k))S.favs.delete(k);else if(t)S.favs.set(k,{k,name:t.name,short:t.short,logo:t.logo,lg:t.lg,sp:t.sp,id:t.id,...(t.player?{player:true,flag:t.flag}:{})});saveFavs();
       renderHead();renderSide();renderTabbar();renderMain(false);renderDetail(false);if(!$('#sres').hidden)renderSearch();
       document.querySelectorAll(`[data-act="fav"][data-k="${CSS.escape(k)}"]`).forEach(x=>x.classList.add('popped'));break}
     case 'nbell':{const k=b.dataset.k;const t=TEAMS.get(k)||S.favs.get(k)||S.notif[k];if(!t)break;
@@ -1776,20 +2018,23 @@ document.addEventListener('change',e=>{if(e.target.id==='dpick'&&e.target.value)
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetail();$('#sres').hidden=true}});
 const normS=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
 function searchResults(q){
-  q=q.trim();if(!q)return `<p class="sub" style="padding:4px 2px">Escribe el nombre de un equipo de cualquier liga.</p>`;
+  q=q.trim();if(!q)return `<p class="sub" style="padding:4px 2px">Busca un equipo o un jugador: futbolistas, tenistas o jugadores de la NBA.</p>`;
+  const ph=playerHits(q);const pl=ph===null&&q.length>=3?`<div class="lbl" style="margin-top:14px">Jugadores</div><p class="sub">Buscando jugadores…</p>`:ph&&ph.length?`<div class="lbl" style="margin-top:14px">Jugadores</div><div class="phits">${ph.map(playerHitHtml).join('')}</div>`:'';
   const nq=normS(q);const hits=[...TEAMS.values()].filter(t=>t.id!=='?'&&(normS(t.name).includes(nq)||normS(t.short)===nq)).slice(0,12);
   const loading=LEAGUES.some(l=>C.get(URL.std(l))?.p);
-  return hits.length?hits.map(t=>`<div class="sres-it" style="display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line-2)">${logo(t,30)}<button class="press" style="flex:1;min-width:0;font-weight:700" data-act="team" data-k="${esc(t.k)}">${esc(t.name)}<br><span class="sub">${LG[t.lg]?.name||''}</span></button>${favBtn(t,false)}</div>`).join(''):`<div class="empty">${loading?'Buscando…':`Ningún equipo coincide con «${esc(q)}».`}</div>`;
+  const tl=hits.length?`<div class="lbl">Equipos</div>`:'';
+  return tl+(hits.length?hits.map(t=>`<div class="sres-it" style="display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line-2)">${logo(t,30)}<button class="press" style="flex:1;min-width:0;font-weight:700" data-act="team" data-k="${esc(t.k)}">${esc(t.name)}<br><span class="sub">${LG[t.lg]?.name||''}</span></button>${favBtn(t,false)}</div>`).join(''):(ph&&ph.length?'':`<div class="empty">${loading?'Buscando…':`Nada coincide con «${esc(q)}».`}</div>`))+pl;
 }
 function renderSearch(){
   const q=$('#q').value.trim();const box=$('#sres');if(!q){box.hidden=true;return}
   const nq=normS(q);const hits=[...TEAMS.values()].filter(t=>t.id!=='?'&&(normS(t.name).includes(nq)||normS(t.short)===nq)).slice(0,10);
   const loading=LEAGUES.some(l=>C.get(URL.std(l))?.p);
-  box.innerHTML=hits.length?hits.map(t=>`<div class="it">${logo(t,26)}<button class="nm" data-act="team" data-k="${esc(t.k)}">${esc(t.name)}<br><span class="lg">${LG[t.lg]?.name||''}</span></button>${favBtn(t,false)}</div>`).join(''):`<div class="empty">${loading?'Buscando…':`Ningún equipo coincide con «${esc(q)}».`}</div>`;
+  const ph=playerHits(q);
+  box.innerHTML=(hits.length?hits.map(t=>`<div class="it">${logo(t,26)}<button class="nm" data-act="team" data-k="${esc(t.k)}">${esc(t.name)}<br><span class="lg">${LG[t.lg]?.name||''}</span></button>${favBtn(t,false)}</div>`).join(''):'')+(ph&&ph.length?`<div class="lbl" style="margin:8px 8px 4px">Jugadores</div>${ph.slice(0,6).map(playerHitHtml).join('')}`:'')+(!hits.length&&!(ph&&ph.length)?`<div class="empty">${loading||ph===null&&q.length>=3?'Buscando…':`Nada coincide con «${esc(q)}».`}</div>`:'');
   box.hidden=false;
 }
-const preloadTeams=()=>LEAGUES.forEach(l=>need(URL.std(l),3600000));
-$('#q').addEventListener('input',renderSearch);
+const preloadTeams=()=>LEAGUES.filter(l=>l.sp!=='tennis').forEach(l=>need(URL.std(l),3600000));
+let sqT;$('#q').addEventListener('input',()=>{clearTimeout(sqT);sqT=setTimeout(renderSearch,250)});
 $('#q').addEventListener('focus',()=>{preloadTeams();renderSearch()});
 document.addEventListener('input',e=>{if(e.target.id==='q2'){S.q2=e.target.value;preloadTeams();$('#sres2').innerHTML=searchResults(S.q2)}});
 document.addEventListener('focusin',e=>{if(e.target.id==='q2')preloadTeams()});

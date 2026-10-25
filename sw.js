@@ -1,6 +1,6 @@
 // SPI Sports: guarda la app para que abra al instante y sin conexión.
 // Los datos de ESPN no se guardan: siempre se piden en directo.
-const CACHE = 'spi-sports-v3';
+const CACHE = 'spi-sports-v4';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
