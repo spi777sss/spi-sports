@@ -321,6 +321,37 @@ picture.lp{display:inline-flex;flex:none}
 .srcs div{display:flex;justify-content:space-between;gap:10px}
 .srcs b{color:var(--fg);font-weight:700}
 
+/* pronóstico: alternativas, fuentes y mercados */
+.tiers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tier{border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:4px;background:var(--surface-2);min-width:0}
+.tier .tk{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.tier.safe .tk{color:var(--up)} .tier.bal .tk{color:var(--accent-2)} .tier.risk .tk{color:var(--amber)}
+.tier.safe{border-color:color-mix(in srgb,var(--up) 35%,transparent)}
+.tier b{font-size:14px;font-weight:800;line-height:1.25;overflow-wrap:anywhere}
+.tier .tp{font-size:12.5px;font-weight:800}
+.tier .sub{line-height:1.35}
+.srcs2{display:flex;flex-direction:column;gap:10px}
+.src2 .sh2{display:flex;align-items:baseline;gap:8px;margin-bottom:5px;flex-wrap:wrap}
+.src2 .sh2 b{font-weight:800}
+.src2 .spick{margin-left:auto;font-size:12px;font-weight:800;color:var(--accent-2)}
+.prob.prob-sm{height:22px;font-size:11px;border-radius:7px}
+.mks{display:flex;flex-direction:column}
+.mk{display:grid;grid-template-columns:minmax(0,1fr) 120px 92px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line-2);font-size:13px}
+.mk:last-child{border-bottom:0}
+.mkl{display:flex;flex-direction:column;min-width:0}
+.mkl b{font-weight:700}
+.mkp{display:flex;align-items:center;gap:8px}
+.mkp b{width:38px;text-align:right;font-weight:800}
+.mbar2{flex:1;height:5px;border-radius:3px;background:var(--surface-3);overflow:hidden}
+.mbar2 i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.mko{display:flex;align-items:center;justify-content:flex-end;gap:6px}
+.mko b{font-weight:800}
+.valtag{font-size:10px;font-weight:800;color:var(--up);background:color-mix(in srgb,var(--up) 14%,transparent);padding:2px 6px;border-radius:99px;text-transform:uppercase;letter-spacing:.05em}
+.insights{margin:12px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.insights li{position:relative;padding-left:16px;font-size:13px;line-height:1.45}
+.insights li::before{content:"";position:absolute;left:2px;top:.55em;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+@media (max-width:440px){.tiers{grid-template-columns:minmax(0,1fr)}.mk{grid-template-columns:minmax(0,1fr) 92px 74px}}
+
 /* forma */
 .form{display:inline-flex;gap:3px}
 .fc{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;font-size:10px;font-weight:800;color:#fff}
@@ -645,7 +676,8 @@ function load(url){
 }
 function need(url,ttl=300000){const c=C.get(url);if(!c||(!c.p&&Date.now()-(c.t||0)>(c&&c.err&&!c.data?8000:ttl)))load(url);return C.get(url)}
 const peek=url=>C.get(url)?.data;
-function queue(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;renderAll(false);if(!S.match)autoSelect()})}
+// re-render agrupado; el setTimeout cubre los casos en que el navegador pausa requestAnimationFrame (pestaña en segundo plano)
+function queue(){if(queued)return;queued=true;const run=()=>{if(!queued)return;queued=false;renderAll(false);if(!S.match)autoSelect()};requestAnimationFrame(run);setTimeout(run,120)}
 
 /* ================= normalización ================= */
 const TEAMS=new Map(),NE=new WeakMap();
@@ -948,57 +980,155 @@ function oddsTab(m,s,anim){
   return h;
 }
 
-/* ================= pronóstico ================= */
-function poissonGrid(lh,la){const pf=(l,k)=>{let p=Math.exp(-l);for(let i=1;i<=k;i++)p*=l/i;return p};const g=[];let H=0,D=0,A=0,O25=0,BT=0;
-  for(let i=0;i<=8;i++)for(let j=0;j<=8;j++){const p=pf(lh,i)*pf(la,j);g.push([i,j,p]);if(i>j)H+=p;else if(i===j)D+=p;else A+=p;if(i+j>2)O25+=p;if(i>0&&j>0)BT+=p}
-  const s=H+D+A;g.sort((a,b)=>b[2]-a[2]);return{h:H/s,d:D/s,a:A/s,o25:O25/s,btts:BT/s,top:g.slice(0,3)}}
-function soccerModel(m){
+/* ================= pronóstico: consenso de fuentes + análisis estadístico ================= */
+const PRED_URL=m=>`${PUSH_API}/predict?d=${new Date(m.ko).toISOString().slice(0,10)}`;
+function poissonGrid(lh,la){const pf=(l,k)=>{let p=Math.exp(-l);for(let i=1;i<=k;i++)p*=l/i;return p};const g=[];let H=0,D=0,A=0,O15=0,O25=0,O35=0,BT=0;
+  for(let i=0;i<=9;i++)for(let j=0;j<=9;j++){const p=pf(lh,i)*pf(la,j);g.push([i,j,p]);if(i>j)H+=p;else if(i===j)D+=p;else A+=p;if(i+j>1)O15+=p;if(i+j>2)O25+=p;if(i+j>3)O35+=p;if(i>0&&j>0)BT+=p}
+  const s=H+D+A;const grid=new Map(g.map(([i,j,p])=>[i+'-'+j,p/s]));g.sort((a,b)=>b[2]-a[2]);
+  return{p:[H/s,D/s,A/s],o15:O15/s,o25:O25/s,o35:O35/s,btts:BT/s,top:g.slice(0,4).map(([i,j,p])=>[i,j,p/s]),grid}}
+// forma de los últimos 5 partidos (de la ficha del partido)
+function formOf(s,id){const x=(s.lastFiveGames||[]).find(l=>l.team?.id===id);return x?(x.events||[]).slice(0,5).map(e=>e.gameResult).filter(Boolean):[]}
+const formPts=f=>f.reduce((a,r)=>a+(r==='W'?3:r==='D'?1:0),0);
+function soccerModel(m,s){
   const gs=standingsEntries(m.lg);if(!gs)return null;const all=gs.flatMap(g=>g.entries);
   const a=all.find(e=>e.t.id===m.home.id),b=all.find(e=>e.t.id===m.away.id);if(!a||!b)return null;
-  const tg=all.reduce((s,e)=>s+(e.st.pointsFor||0),0),tp=all.reduce((s,e)=>s+(e.st.gamesPlayed||0),0);const avg=tp>10?tg/tp:1.35;
+  const tg=all.reduce((x,e)=>x+(e.st.pointsFor||0),0),tp=all.reduce((x,e)=>x+(e.st.gamesPlayed||0),0);const avg=tp>10?tg/tp:1.35;
   const r=(g,p)=>((g||0)+avg*4)/((p||0)+4)/avg; // encoge hacia la media con pocos partidos
-  const lh=avg*r(a.st.pointsFor,a.st.gamesPlayed)*r(b.st.pointsAgainst,b.st.gamesPlayed)*1.12;
-  const la=avg*r(b.st.pointsFor,b.st.gamesPlayed)*r(a.st.pointsAgainst,a.st.gamesPlayed)*.9;
-  return{lh,la,...poissonGrid(lh,la),n:Math.min(a.st.gamesPlayed||0,b.st.gamesPlayed||0)};
+  const fa=formOf(s,m.home.id),fb=formOf(s,m.away.id);
+  const fx=f=>f.length?1+.06*((formPts(f)/f.length)-1.35):1; // ajuste suave por forma reciente
+  const lh=avg*r(a.st.pointsFor,a.st.gamesPlayed)*r(b.st.pointsAgainst,b.st.gamesPlayed)*1.12*fx(fa);
+  const la=avg*r(b.st.pointsFor,b.st.gamesPlayed)*r(a.st.pointsAgainst,a.st.gamesPlayed)*.9*fx(fb);
+  return{lh,la,...poissonGrid(lh,la),a,b,all,n:Math.min(a.st.gamesPlayed||0,b.st.gamesPlayed||0)};
+}
+// emparejar nombres de equipos entre webs distintas
+const ALIAS={internazionale:'inter','paris saint germain':'psg','paris sg':'psg','bayern munich':'bayern','bayern munchen':'bayern','manchester united':'man utd','manchester utd':'man utd','man united':'man utd','manchester city':'man city','wolverhampton wanderers':'wolves','nottingham forest':'nottm forest',"borussia monchengladbach":'gladbach','monchengladbach':'gladbach','atletico de madrid':'atletico madrid','atl madrid':'atletico madrid','athletic bilbao':'athletic club','tottenham hotspur':'tottenham','newcastle united':'newcastle','west ham united':'west ham','brighton hove albion':'brighton','olympique de marsella':'marseille','olympique marseille':'marseille','olympique lyonnais':'lyon','olympique de lyon':'lyon','sporting cp':'sporting lisbon','psv eindhoven':'psv','ajax amsterdam':'ajax'};
+const STOPW=new Set(['fc','cf','ac','sc','cd','ud','sd','rc','rcd','afc','ssc','as','us','club','de','del','la','le','the','calcio','cp','sl','fk','sk','bk','if','ca','cr','ec','se','sv','tsg','vfl','1','04','05','1899','1909','1846']);
+function nkey(s){s=(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();return ALIAS[s]||s}
+function nsim(a,b){a=nkey(a);b=nkey(b);if(a===b)return 1;const A=a.split(' ').filter(t=>!STOPW.has(t)),B=b.split(' ').filter(t=>!STOPW.has(t));if(!A.length||!B.length)return 0;
+  let hit=0;for(const x of A)if(B.some(y=>x===y||(x.length>=3&&y.length>=3&&(x.startsWith(y)||y.startsWith(x)))))hit++;return hit/Math.max(A.length,B.length)}
+function findPred(list,m){let best=null,bs=0;for(const x of list||[]){const s=Math.min(nsim(x.home,m.home.name),nsim(x.away,m.away.name));if(s>bs){bs=s;best=x}}return bs>=.5?best:null}
+const argmax=p=>p.indexOf(Math.max(...p));
+const OUT=['1','X','2'];
+function confLabel(p){return p>=.72?'Alta':p>=.55?'Media':'Baja'}
+function marketRow(x){
+  const fair=1/x.p;const val=x.odds?x.p*x.odds-1:null;
+  return `<div class="mk"><div class="mkl"><b>${esc(x.label)}</b>${x.note?`<span class="sub">${esc(x.note)}</span>`:''}</div><div class="mkp"><span class="mbar2"><i style="width:${Math.round(x.p*100)}%"></i></span><b>${pct(x.p)}</b></div><div class="mko">${x.odds?`<b>${x.odds.toFixed(2)}</b>`:`<span class="sub">justa ${fair.toFixed(2)}</span>`}${val!=null&&val>.05?`<span class="valtag">valor</span>`:''}</div></div>`;
+}
+// tres alternativas: la más probable, la principal del consenso y una apuesta mayor en la misma dirección
+function tierCards(mk,mainLabel,riskPool){
+  const pool=mk.filter(x=>x.p<.95);
+  const safe=pool.filter(x=>x.p>=.7).sort((a,b)=>b.p-a.p)[0]||pool.slice().sort((a,b)=>b.p-a.p)[0];
+  const bal=pool.find(x=>x.label===mainLabel&&x!==safe&&x.p>=.45)||pool.filter(x=>x!==safe&&x.p>=.5&&x.p<.75).sort((a,b)=>Math.abs(a.p-.6)-Math.abs(b.p-.6))[0];
+  const rp=(riskPool&&riskPool.length?riskPool:pool).filter(x=>x!==safe&&x!==bal&&x.p>=.12&&x.p<.5);
+  const risk=rp.sort((a,b)=>Math.abs(a.p-.33)-Math.abs(b.p-.33))[0];
+  const card=(k,t,x,why)=>x?`<div class="tier ${k}"><span class="tk">${t}</span><b>${esc(x.label)}</b><span class="tp">${pct(x.p)} · ${x.odds?'cuota '+x.odds.toFixed(2):'cuota justa '+(1/x.p).toFixed(2)}</span><span class="sub">${why}</span></div>`:'';
+  return `<div class="tiers">${card('safe','Más segura',safe,'La opción con más probabilidad de acierto.')}${card('bal','Equilibrada',bal,'Buena probabilidad con algo más de premio.')}${card('risk','Con más premio',risk,'Menos probable, pero paga bastante más.')}</div>`;
+}
+function srcRows(srcs,labels){
+  return `<div class="srcs2">${srcs.map(x=>`<div class="src2"><div class="sh2"><b>${esc(x.name)}</b><span class="sub">${esc(x.sub||'')}</span><span class="spick">${esc(x.pick||'')}</span></div>${x.p?`<div class="prob prob-sm">${x.p.map((v,i)=>`<span class="${['p1','px','p2'][x.p.length===2&&i===1?2:i]}" style="width:${Math.round(v*100)}%">${Math.round(v*100)}</span>`).join('')}</div>`:''}</div>`).join('')}</div><div class="probl" style="margin-top:4px">${labels.map(l=>`<span>${esc(l)}</span>`).join('')}</div>`;
 }
 function predTab(m,s,anim){
   const o=parseOdds(m,s);const nv=o&&noVig(o);
   if(m.sp==='soccer'){
-    need(URL.std(LG[m.lg]),600000);const md=soccerModel(m);
-    if(!md&&!nv)return C.get(URL.std(LG[m.lg]))?.p?skelBlock(260):`<div class="empty-state"><strong>Sin datos suficientes</strong><span>No hay cuotas ni clasificación para calcular un pronóstico.</span></div>`;
-    const W=nv&&md?.65:nv?1:0;const f=k=>(nv?nv[k]*W:0)+(md?md[k]*(1-W):0);
-    const P={h:f('h'),d:f('d'),a:f('a')};
-    const opts=[['h','Gana '+m.home.name,P.h],['d','Empate',P.d],['a','Gana '+m.away.name,P.a]].sort((x,y)=>y[2]-x[2]);
-    let pick=opts[0],conf=pick[2];
-    if(conf<.45){const dc=P.h>=P.a?['1X',m.home.name+' o empate',P.h+P.d]:['X2',m.away.name+' o empate',P.a+P.d];pick=[dc[0],dc[1],dc[2]];conf=dc[2]}
-    const lvl=conf>=.7?'Alta':conf>=.55?'Media':'Baja';
-    let value='';if(o){for(const [k,lab] of [['h',m.home.short],['d','Empate'],['a',m.away.short]]){const odd=o[k]?.cur;if(odd&&md){const edge=md[k]*odd-1;if(edge>.08){value=`<span class="valbadge">${ICON.up} Valor en ${esc(lab)} (${odd.toFixed(2)}): el modelo ve ${pct(md[k])}</span>`;break}}}}
-    const top=md?.top||[];const o25=md?(o?.ou?.line===2.5&&o.ou.over.cur&&o.ou.under.cur?(()=>{const i1=1/o.ou.over.cur,i2=1/o.ou.under.cur;return .6*(i1/(i1+i2))+.4*md.o25})():md.o25):null;
-    let h=`<div class="pick ${anim?'':''}"><span class="k">Pronóstico SPI</span><span class="v">${esc(pick[1])}</span><span class="s">${pick[0]==='1X'||pick[0]==='X2'?'Doble oportunidad: el partido está muy igualado.':'Resultado más probable según mercado y modelo.'}</span>
-      <div class="conf"><span>Confianza ${lvl}</span><span class="m"><i style="width:${anim?0:conf*100}%" data-w="${conf*100}"></i></span><b style="color:var(--fg)">${pct(conf)}</b></div>${value}</div>`;
-    h+=`<div class="sec"><h4>Probabilidades SPI</h4>${probBar([P.h,P.d,P.a],[m.home.short+' gana','Empate',m.away.short+' gana'])}</div>`;
-    if(md)h+=`<div class="sec"><h4>Detalle del modelo</h4><div class="pgrid2"><div class="pstat"><div class="pv">${top[0]?top[0][0]+'–'+top[0][1]:'–'}</div><div class="pl2">Marcador más probable (${top[0]?pct(top[0][2]):''})</div></div><div class="pstat"><div class="pv">${pct(o25)}</div><div class="pl2">Más de 2,5 goles</div></div><div class="pstat"><div class="pv">${pct(md.btts)}</div><div class="pl2">Ambos marcan</div></div><div class="pstat"><div class="pv">${md.lh.toFixed(2)}</div><div class="pl2">Goles esperados ${esc(m.home.short)}</div></div><div class="pstat"><div class="pv">${md.la.toFixed(2)}</div><div class="pl2">Goles esperados ${esc(m.away.short)}</div></div><div class="pstat"><div class="pv">${top.slice(1).map(t=>t[0]+'–'+t[1]).join(' · ')||'–'}</div><div class="pl2">Otros marcadores probables</div></div></div></div>`;
-    h+=`<div class="sec"><h4>Fuentes</h4><div class="srcs">${nv?`<div><span>Mercado de apuestas (${esc(o.prov)}, sin margen)</span><b>${Math.round(W*100)}%</b></div>`:''}${md?`<div><span>Modelo de goles SPI · ${md.n} jornadas de clasificación</span><b>${Math.round((1-W)*100)}%</b></div>`:''}</div></div>
-      <p class="disc">El pronóstico combina el consenso del mercado, que es la referencia más precisa disponible, con un modelo de Poisson basado en los goles a favor y en contra de la temporada. Es una estimación: no garantiza el resultado.</p>`;
+    need(URL.std(LG[m.lg]),600000);const pc=PUSH_API?need(PRED_URL(m),900000):null;
+    const md=soccerModel(m,s);
+    if(!md&&!nv&&!pc?.data)return (C.get(URL.std(LG[m.lg]))?.p||pc?.p)?skelBlock(320):`<div class="empty-state"><strong>Sin datos suficientes</strong><span>No hay cuotas, clasificación ni pronósticos externos para este partido.</span></div>`;
+    const sa=findPred(pc?.data?.statarea,m),vb=findPred(pc?.data?.vitibet,m);
+    const srcs=[];
+    if(nv)srcs.push({name:'Mercado de apuestas',sub:o.prov+', sin margen',w:.35,p:[nv.h,nv.d,nv.a],o25:o.ou?.line===2.5&&o.ou.over.cur&&o.ou.under.cur?(1/o.ou.over.cur)/((1/o.ou.over.cur)+(1/o.ou.under.cur)):null});
+    if(sa){const t=sa.p1+sa.px+sa.p2||1;srcs.push({name:'Statarea',sub:'modelo estadístico + comunidad',w:.25,p:[sa.p1/t,sa.px/t,sa.p2/t],o15:sa.o15/100,o25:sa.o25/100,o35:sa.o35/100,btts:sa.btts/100})}
+    if(md)srcs.push({name:'Modelo SPI',sub:`Poisson · ${md.n} jornadas + forma`,w:.25,p:md.p,o15:md.o15,o25:md.o25,o35:md.o35,btts:md.btts});
+    if(vb){const g=poissonGrid(vb.score[0]+.3,vb.score[1]+.3);srcs.push({name:'Vitibet',sub:`marcador previsto ${vb.score[0]}-${vb.score[1]}`,w:.15,p:g.p,o15:g.o15,o25:g.o25,o35:g.o35,btts:g.btts})}
+    srcs.forEach(x=>{const i=argmax(x.p);x.pick=['Gana '+m.home.short,'Empate','Gana '+m.away.short][i]});
+    const avgOf=k=>{const xs=srcs.filter(x=>x[k]!=null);const w=xs.reduce((a,x)=>a+x.w,0);return w?xs.reduce((a,x)=>a+x[k]*x.w,0)/w:null};
+    const W=srcs.reduce((a,x)=>a+x.w,0);const P=[0,1,2].map(i=>srcs.reduce((a,x)=>a+x.p[i]*x.w,0)/W);
+    const o15=avgOf('o15'),o25=avgOf('o25'),o35=avgOf('o35'),btts=avgOf('btts');
+    const top=argmax(P);const agree=srcs.filter(x=>argmax(x.p)===top).length;
+    let main=[`Gana ${m.home.name}`,'Empate',`Gana ${m.away.name}`][top],mp=P[top],dc=false;
+    if(mp<.45){dc=true;if(P[0]>=P[2]){main=`${m.home.name} o empate`;mp=P[0]+P[1]}else{main=`${m.away.name} o empate`;mp=P[2]+P[1]}}
+    // marcador exacto de consenso
+    let cs=null;if(md){const cands=md.top.map(([i,j])=>i+'-'+j);if(vb)cands.push(vb.score.join('-'));const sc=c=>md.grid.get(c)*(vb&&c===vb.score.join('-')?1.35:1);cs=[...new Set(cands)].sort((a,b)=>sc(b)-sc(a))[0]}
+    const ou=o?.ou?.line===2.5?o.ou:null;
+    const mk=[
+      {label:`Gana ${m.home.name}`,p:P[0],odds:o?.h?.cur},{label:'Empate',p:P[1],odds:o?.d?.cur},{label:`Gana ${m.away.name}`,p:P[2],odds:o?.a?.cur},
+      {label:`${m.home.short} o empate (1X)`,p:P[0]+P[1]},{label:`${m.away.short} o empate (X2)`,p:P[2]+P[1]},{label:'Sin empate (12)',p:P[0]+P[2]},
+      ...(o15!=null?[{label:'Más de 1,5 goles',p:o15}]:[]),...(o25!=null?[{label:'Más de 2,5 goles',p:o25,odds:ou?.over?.cur},{label:'Menos de 2,5 goles',p:1-o25,odds:ou?.under?.cur}]:[]),...(o35!=null?[{label:'Menos de 3,5 goles',p:1-o35},{label:'Más de 3,5 goles',p:o35}]:[]),
+      ...(btts!=null?[{label:'Ambos marcan: sí',p:btts},{label:'Ambos marcan: no',p:1-btts}]:[]),
+      ...(cs&&md?[{label:`Marcador exacto ${cs.replace('-','–')}`,p:md.grid.get(cs),note:vb&&cs===vb.score.join('-')?'coincide con Vitibet':'según el Modelo SPI'}]:[])
+    ].filter(x=>x.p!=null&&x.p>0);
+    // combinaciones en la dirección del favorito (con el reparto de goles del Modelo SPI)
+    const risky=[];
+    if(md&&top!==1){const fav=top===0?m.home:m.away;const win=(i,j)=>top===0?i>j:j>i;let pw=0;const sum=f=>{let t=0;for(const [k,v] of md.grid){const [i,j]=k.split('-').map(Number);if(f(i,j))t+=v}return t};pw=sum(win);
+      const add=(label,f)=>{const r=sum((i,j)=>win(i,j)&&f(i,j))/pw;risky.push({label,p:P[top]*r})};
+      add(`Gana ${fav.short} y más de 2,5 goles`,(i,j)=>i+j>2);add(`Gana ${fav.short} y ambos marcan`,(i,j)=>i>0&&j>0);add(`Gana ${fav.short} por 2 o más goles`,(i,j)=>Math.abs(i-j)>=2);
+      risky.forEach(x=>mk.push(x))}
+    const csm=mk.find(x=>x.label.startsWith('Marcador exacto'));if(csm)risky.push(csm);
+    let h=`<div class="pick"><span class="k">Pronóstico SPI · consenso de ${srcs.length} fuente${srcs.length>1?'s':''}</span><span class="v">${esc(main)}</span>
+      <span class="s">${dc?'Partido igualado: la doble oportunidad cubre el resultado más probable y el empate. ':''}${agree} de ${srcs.length} fuentes coinciden en el favorito.${cs?` Marcador más probable: ${cs.replace('-','–')}.`:''}</span>
+      <div class="conf"><span>Confianza ${confLabel(mp)}</span><span class="m"><i style="width:${anim?0:mp*100}%" data-w="${mp*100}"></i></span><b style="color:var(--fg)">${pct(mp)}</b></div></div>`;
+    h+=`<div class="sec"><h4>Alternativas</h4>${tierCards(mk,dc?null:main,risky)}</div>`;
+    h+=`<div class="sec"><h4>Probabilidades de consenso</h4>${probBar(P,[m.home.short+' gana','Empate',m.away.short+' gana'])}</div>`;
+    h+=`<div class="sec"><h4>Qué dice cada fuente</h4>${srcRows(srcs,[m.home.short,'Empate',m.away.short])}${sa&&sa.up!=null?`<p class="foot" style="padding:6px 0 0">Comunidad de Statarea: ${sa.up} a favor y ${sa.down} en contra de su pronóstico «${esc(sa.tip)}».</p>`:''}${!sa&&!vb&&PUSH_API?`<p class="foot" style="padding:6px 0 0">${pc?.p?'Buscando este partido en Statarea y Vitibet…':'Statarea y Vitibet no publican pronóstico para este partido.'}</p>`:''}</div>`;
+    h+=`<div class="sec"><h4>Todas las opciones<span>prob. · cuota</span></h4><div class="mks">${mk.slice().sort((a,b)=>b.p-a.p).map(marketRow).join('')}</div></div>`;
+    h+=analysisSoccer(m,s,md,{o25,btts,sa});
+    h+=`<p class="disc">Consenso ponderado: mercado de apuestas 35 %, Statarea 25 %, Modelo SPI 25 % y Vitibet 15%. Si falta una fuente, el peso se reparte entre las demás. Forebet, PredictZ y otras webs bloquean el acceso automático, por eso no se incluyen. La «cuota justa» es la que correspondería a esa probabilidad, y «valor» indica que la cuota real paga más de lo que debería. Es una estimación, no una garantía: si apuestas, hazlo con responsabilidad.</p>`;
     return h;
   }
-  // baloncesto: ESPN BPI + mercado
-  const pc=need(URL.pred(LG[m.lg],m.id),600000);const pd=pc.data;
+  // ---------- baloncesto: ESPN BPI + mercado + modelo SPI ----------
+  const pc=need(URL.pred(LG[m.lg],m.id),600000);const pd=pc.data;need(URL.std(LG[m.lg]),600000);
   const stat=(side,name)=>{const arr=pd?.[side]?.statistics||[];return arr.find(x=>x.name===name)?.value};
   let bpiH=stat('homeTeam','gameProjection');const bpiA=stat('awayTeam','gameProjection');if(bpiH==null&&bpiA!=null)bpiH=100-bpiA;
   let diffH=stat('homeTeam','teamPredPtDiff');if(diffH==null){const dA=stat('awayTeam','teamPredPtDiff');if(dA!=null)diffH=-dA}
-  let expH=stat('homeTeam','teamExpectedPts')??stat('awayTeam','oppExpectedPts'),expA=stat('awayTeam','teamExpectedPts')??stat('homeTeam','oppExpectedPts');
-  if(!pd&&pc.p&&!nv)return skelBlock(260);
-  if(bpiH==null&&!nv)return `<div class="empty-state"><strong>Sin pronóstico disponible</strong><span>ESPN aún no ha publicado su proyección para este partido.</span></div>`;
-  const pb=bpiH!=null?bpiH/100:null;const ph=pb!=null&&nv?.5*pb+.5*nv.h:pb??nv.h;
-  const fav=ph>=.5?m.home:m.away;const conf=Math.max(ph,1-ph);const lvl=conf>=.7?'Alta':conf>=.58?'Media':'Baja';
-  let h=`<div class="pick"><span class="k">Pronóstico SPI</span><span class="v">Gana ${esc(fav.name)}</span><span class="s">${diffH!=null?`Margen proyectado: ${Math.abs(diffH).toFixed(1)} puntos a favor de ${esc((diffH>=0?m.home:m.away).short)}.`:'Según el mercado de apuestas.'}</span>
-    <div class="conf"><span>Confianza ${lvl}</span><span class="m"><i style="width:${anim?0:conf*100}%" data-w="${conf*100}"></i></span><b style="color:var(--fg)">${pct(conf)}</b></div></div>`;
-  h+=`<div class="sec"><h4>Probabilidad de victoria</h4>${probBar([ph,1-ph],[m.home.short,m.away.short])}</div>`;
-  h+=`<div class="sec"><h4>Proyección</h4><div class="pgrid2">${expH?`<div class="pstat"><div class="pv">${Math.round(expH)}–${Math.round(expA)}</div><div class="pl2">Marcador proyectado</div></div>`:''}${expH?`<div class="pstat"><div class="pv">${Math.round(expH+expA)}</div><div class="pl2">Puntos totales${o?.ou?` (línea ${o.ou.line})`:''}</div></div>`:''}${pb!=null?`<div class="pstat"><div class="pv">${pct(pb)}</div><div class="pl2">ESPN BPI · ${esc(m.home.short)}</div></div>`:''}${nv?`<div class="pstat"><div class="pv">${pct(nv.h)}</div><div class="pl2">Mercado · ${esc(m.home.short)}</div></div>`:''}</div></div>`;
-  h+=`<div class="sec"><h4>Fuentes</h4><div class="srcs">${pb!=null?`<div><span>ESPN Basketball Power Index (Matchup Predictor)</span><b>${nv?'50%':'100%'}</b></div>`:''}${nv?`<div><span>Mercado de apuestas (${esc(o.prov)}, sin margen)</span><b>${pb!=null?'50%':'100%'}</b></div>`:''}</div></div><p class="disc">Estimación orientativa: no garantiza el resultado.</p>`;
+  const expH=stat('homeTeam','teamExpectedPts')??stat('awayTeam','oppExpectedPts'),expA=stat('awayTeam','teamExpectedPts')??stat('homeTeam','oppExpectedPts');
+  const a=teamEntry(m.lg,m.home.id),b=teamEntry(m.lg,m.away.id);
+  let mdl=null;if(a&&b&&a.st.avgPointsFor){const mH=(a.st.avgPointsFor+b.st.avgPointsAgainst)/2+1.5,mA=(b.st.avgPointsFor+a.st.avgPointsAgainst)/2-1.5;const ph=1/(1+Math.exp(-(mH-mA)/7));mdl={p:[ph,1-ph],diff:mH-mA,total:mH+mA}}
+  if(!pd&&pc.p&&!nv&&!mdl)return skelBlock(260);
+  const srcs=[];
+  if(nv)srcs.push({name:'Mercado de apuestas',sub:o.prov+', sin margen',w:.4,p:[nv.h,nv.a]});
+  if(bpiH!=null)srcs.push({name:'ESPN BPI',sub:'Matchup Predictor',w:.4,p:[bpiH/100,1-bpiH/100]});
+  if(mdl)srcs.push({name:'Modelo SPI',sub:'puntos a favor y en contra',w:.2,p:mdl.p});
+  if(!srcs.length)return `<div class="empty-state"><strong>Sin pronóstico disponible</strong><span>Todavía no hay datos para este partido.</span></div>`;
+  srcs.forEach(x=>{x.pick='Gana '+(x.p[0]>=.5?m.home.short:m.away.short)});
+  const W=srcs.reduce((s2,x)=>s2+x.w,0);const ph=srcs.reduce((s2,x)=>s2+x.p[0]*x.w,0)/W;
+  const fav=ph>=.5?m.home:m.away;const conf=Math.max(ph,1-ph);const agree=srcs.filter(x=>(x.p[0]>=.5)===(ph>=.5)).length;
+  const margin=diffH??mdl?.diff??null;const total=expH&&expA?expH+expA:mdl?.total??null;
+  const ncdf=z=>.5*(1+Math.tanh(.7978845608*(z+.044715*z*z*z)));
+  const mk=[{label:`Gana ${m.home.name}`,p:ph,odds:o?.h?.cur},{label:`Gana ${m.away.name}`,p:1-ph,odds:o?.a?.cur}];
+  if(o?.sp&&margin!=null){const line=+o.sp.line;const pc2=ncdf((margin+line)/12);mk.push({label:`${m.home.short} ${line>0?'+':''}${line} (hándicap)`,p:pc2,odds:o.sp.h.cur},{label:`${m.away.short} ${line>0?'':'+'}${-line} (hándicap)`,p:1-pc2,odds:o.sp.a.cur})}
+  if(o?.ou&&total!=null){const po=ncdf((total-o.ou.line)/17);mk.push({label:`Más de ${o.ou.line} puntos`,p:po,odds:o.ou.over.cur},{label:`Menos de ${o.ou.line} puntos`,p:1-po,odds:o.ou.under.cur})}
+  let h=`<div class="pick"><span class="k">Pronóstico SPI · consenso de ${srcs.length} fuente${srcs.length>1?'s':''}</span><span class="v">Gana ${esc(fav.name)}</span><span class="s">${agree} de ${srcs.length} fuentes coinciden.${margin!=null?` Margen proyectado: ${Math.abs(margin).toFixed(1)} puntos.`:''}${total?` Total proyectado: ${Math.round(total)} puntos.`:''}</span>
+    <div class="conf"><span>Confianza ${confLabel(conf)}</span><span class="m"><i style="width:${anim?0:conf*100}%" data-w="${conf*100}"></i></span><b style="color:var(--fg)">${pct(conf)}</b></div></div>`;
+  h+=`<div class="sec"><h4>Alternativas</h4>${tierCards(mk,`Gana ${fav.name}`,mk.filter(x=>x.odds&&x.p<.5))}</div>`;
+  h+=`<div class="sec"><h4>Qué dice cada fuente</h4>${srcRows(srcs,[m.home.short,m.away.short])}</div>`;
+  h+=`<div class="sec"><h4>Todas las opciones<span>prob. · cuota</span></h4><div class="mks">${mk.slice().sort((x,y)=>y.p-x.p).map(marketRow).join('')}</div></div>`;
+  if(a&&b)h+=`<div class="sec"><h4>Análisis estadístico</h4><div class="kv"><span>${a.st.wins}-${a.st.losses}</span><span class="k">Balance</span><span class="v2">${b.st.wins}-${b.st.losses}</span><span>${a.st.avgPointsFor_d||'–'}</span><span class="k">Puntos por partido</span><span class="v2">${b.st.avgPointsFor_d||'–'}</span><span>${a.st.avgPointsAgainst_d||'–'}</span><span class="k">Puntos recibidos</span><span class="v2">${b.st.avgPointsAgainst_d||'–'}</span><span>${esc(a.st.home_t||a.st.Home_d||'–')}</span><span class="k">En casa / fuera</span><span class="v2">${esc(b.st.road_t||b.st.Road_d||'–')}</span><span>${esc(a.st.lasttengames_t||a.st['Last Ten Games_d']||'–')}</span><span class="k">Últimos 10</span><span class="v2">${esc(b.st.lasttengames_t||b.st['Last Ten Games_d']||'–')}</span><span>${a.st.streak_d||'–'}</span><span class="k">Racha</span><span class="v2">${b.st.streak_d||'–'}</span></div></div>`;
+  h+=`<p class="disc">Consenso ponderado: mercado 40 %, ESPN BPI 40 % y Modelo SPI 20 %. Las probabilidades de hándicap y de puntos totales se calculan con el margen y el total proyectados. Es una estimación, no una garantía.</p>`;
   return h;
 }
+// análisis estadístico con conclusiones en texto
+function analysisSoccer(m,s,md,c){
+  if(!md)return'';
+  const {a,b,all}=md;const n=all.length;const pg=(e,k)=>e.st.gamesPlayed?e.st[k]/e.st.gamesPlayed:0;
+  const rankBy=(k,asc)=>all.slice().sort((x,y)=>asc?pg(x,k)-pg(y,k):pg(y,k)-pg(x,k));
+  const atk=rankBy('pointsFor'),def=rankBy('pointsAgainst',true);
+  const fa=formOf(s,m.home.id),fb=formOf(s,m.away.id);
+  const ss=(s.seasonseries||[]).find(x=>x.type==='head-to-head')||(s.seasonseries||[])[0];let w=0,d=0,l=0;
+  for(const e of ss?.events||[]){const cs=e.competitors||[];const H=cs.find(x=>x.homeAway==='home')||cs[0],A=cs.find(x=>x.homeAway==='away')||cs[1];const hs=num(H?.score),as=num(A?.score);if(hs==null||as==null)continue;const my=H.team?.id===m.home.id?hs:as,op=H.team?.id===m.home.id?as:hs;my>op?w++:my<op?l++:d++}
+  const ins=[];
+  for(const [e,t] of [[a,m.home],[b,m.away]]){const ra=atk.indexOf(e)+1,rd=def.indexOf(e)+1;
+    if(ra<=3)ins.push(`${t.name} tiene ${ra===1?'el mejor ataque':'el '+ra+'.º mejor ataque'} de la liga (${pg(e,'pointsFor').toFixed(2)} goles por partido).`);
+    if(rd<=3)ins.push(`${t.name} tiene ${rd===1?'la mejor defensa':'la '+rd+'.ª mejor defensa'} (${pg(e,'pointsAgainst').toFixed(2)} goles encajados por partido).`);
+    if(ra>n-3)ins.push(`${t.name} es de los que menos marcan (${pg(e,'pointsFor').toFixed(2)} por partido).`);
+    if(rd>n-3)ins.push(`${t.name} es de los que más encajan (${pg(e,'pointsAgainst').toFixed(2)} por partido).`)}
+  for(const [f,t] of [[fa,m.home],[fb,m.away]])if(f.length>=4){const p=formPts(f),mx=f.length*3;if(p>=mx*.73)ins.push(`${t.name} llega en gran forma: ${p} de ${mx} puntos en sus últimos ${f.length} partidos.`);else if(p<=mx*.27)ins.push(`${t.name} llega en mala racha: solo ${p} de ${mx} puntos en sus últimos ${f.length} partidos.`)}
+  if(w+d+l>=3)ins.push(`Cara a cara reciente: ${m.home.short} ${w} victorias, ${d} empates y ${l} derrotas en los últimos ${w+d+l}.`);
+  if(c.o25!=null)ins.push(c.o25>=.62?`Se esperan goles: ${pct(c.o25)} de probabilidad de más de 2,5.`:c.o25<=.42?`Partido de pocos goles previsto: solo ${pct(c.o25)} de probabilidad de más de 2,5.`:`Goles en equilibrio: ${pct(c.o25)} de probabilidad de más de 2,5.`);
+  if(c.btts!=null&&(c.btts>=.6||c.btts<=.4))ins.push(c.btts>=.6?`Lo normal es que marquen los dos (${pct(c.btts)}).`:`Es probable que alguno de los dos se quede sin marcar (${pct(1-c.btts)}).`);
+  const row=(k,va,vb2)=>`<span>${va}</span><span class="k">${k}</span><span class="v2">${vb2}</span>`;
+  return `<div class="sec"><h4>Análisis estadístico</h4><div class="kv">${row('Posición',(all.indexOf(a)+1)+'º',(all.indexOf(b)+1)+'º')}${row('Puntos por partido',pg(a,'points').toFixed(2),pg(b,'points').toFixed(2))}${row('Goles a favor / partido',pg(a,'pointsFor').toFixed(2),pg(b,'pointsFor').toFixed(2))}${row('Goles en contra / partido',pg(a,'pointsAgainst').toFixed(2),pg(b,'pointsAgainst').toFixed(2))}${row('% de victorias',Math.round(pg(a,'wins')*100)+'%',Math.round(pg(b,'wins')*100)+'%')}${row('Últimos 5',formChips(fa.slice().reverse()),formChips(fb.slice().reverse()))}${row('Goles esperados (modelo)',md.lh.toFixed(2),md.la.toFixed(2))}</div>
+    ${ins.length?`<ul class="insights">${ins.slice(0,6).map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`:''}</div>`;
+}
+
 
 /* ================= ficha: piezas comunes ================= */
 function statRows(rows,anim){return `<div class="st">${rows.map(([lab,h,a,F])=>{F=F||(v=>v);const hv=+h||0,av=+a||0;const tot=hv+av||1;const hp=hv/tot*100,ap=av/tot*100;

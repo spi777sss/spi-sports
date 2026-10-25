@@ -23,7 +23,47 @@ const MAX_TEAMS = 60;
 
 const json = (data, status, origin) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json', ...cors(origin) } });
 function cors(origin) {
-  return ORIGINS.includes(origin) ? { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'POST, OPTIONS', 'access-control-allow-headers': 'content-type', vary: 'origin' } : {};
+  return ORIGINS.includes(origin) ? { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'content-type', vary: 'origin' } : {};
+}
+
+// ---------- pronósticos de webs especializadas (solo las que permiten el acceso automático) ----------
+const UA = 'Mozilla/5.0 (compatible; SPI-Sports/1.0; +https://spi777sss.github.io/spi-sports/)';
+const strip = s => s.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, ' ').trim();
+async function getText(url) {
+  const r = await fetch(url, { headers: { 'user-agent': UA, accept: 'text/html' }, cf: { cacheTtl: 1800, cacheEverything: true } });
+  return r.ok ? r.text() : '';
+}
+// Statarea: probabilidades 1X2, descanso, goles, ambos marcan y votos de su comunidad
+async function statarea(date) {
+  const h = await getText(`https://www.statarea.com/predictions/date/${date}/competition`);
+  const out = [];
+  for (const seg of h.split("<div class='match' id='").slice(1)) {
+    const name = cls => { const m = seg.match(new RegExp(`<div class='${cls}'>[\\s\\S]*?<div class='name'>([\\s\\S]*?)</div>`)); return m ? strip(m[1]) : ''; };
+    const home = name('hostteam'), away = name('guestteam');
+    const when = (seg.match(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2})<\/div>/) || [])[1] || '';
+    const tip = strip((seg.match(/<div class='tip'><div class='ownheader'>TIP<\/div><div class='value'>([\s\S]*?)<\/div><\/div>/) || [])[1] || '');
+    const inf = seg.split("<div class='inforow'>")[1] || '';
+    const v = [...inf.matchAll(/<div class='value [a-z]+\d*'>(\d+)<\/div>/g)].map(m => +m[1]);
+    const likes = [...seg.matchAll(/<div class='like(?:positive|negative)'>[\s\S]*?<div class='value'>(\d+)<\/div>/g)].map(m => +m[1]);
+    if (!home || !away || v.length < 11) continue;
+    out.push({ home, away, when, tip, p1: v[0], px: v[1], p2: v[2], o15: v[6], o25: v[7], o35: v[8], btts: v[9], up: likes[0] ?? null, down: likes[1] ?? null });
+  }
+  return out;
+}
+// Vitibet: marcador previsto y apuesta recomendada (publica los partidos del día)
+async function vitibet() {
+  const h = await getText('https://www.vitibet.com/index.php?lang=en');
+  const out = [];
+  const re = /class="viti-v6-card"[^>]*data-zacatek="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
+  for (const m of h.matchAll(re)) {
+    const b = m[2];
+    const home = strip((b.match(/viti-v6-team-home">([\s\S]*?)<\/div>/) || [])[1] || '');
+    const away = strip((b.match(/viti-v6-team-away">([\s\S]*?)<\/div>/) || [])[1] || '');
+    const sc = (b.match(/viti-v6-m-score">\s*(\d+)\s*:\s*(\d+)/) || []);
+    const tip = strip((b.match(/viti-v6-badge[^>]*>([\s\S]*?)<\/span>/) || [])[1] || '');
+    if (home && away && sc[1] != null) out.push({ home, away, ko: m[1], score: [+sc[1], +sc[2]], tip });
+  }
+  return out;
 }
 async function idFor(endpoint) {
   const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(endpoint)));
@@ -58,6 +98,14 @@ export default {
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(origin) });
     const url = new URL(req.url);
     if (req.method === 'GET' && url.pathname === '/') return new Response('SPI Sports · notificaciones activas', { headers: { 'content-type': 'text/plain; charset=utf-8' } });
+    if (req.method === 'GET' && url.pathname === '/predict') {
+      const d = url.searchParams.get('d') || '';
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return json({ error: 'Fecha no válida' }, 400, origin);
+      const [sa, vb] = await Promise.all([statarea(d).catch(() => []), vitibet().catch(() => [])]);
+      const res = json({ date: d, statarea: sa, vitibet: vb, at: Date.now() }, 200, origin);
+      res.headers.set('cache-control', 'public, max-age=900');
+      return res;
+    }
     if (req.method !== 'POST') return json({ error: 'Método no permitido' }, 405, origin);
     if (!ORIGINS.includes(origin)) return json({ error: 'Origen no permitido' }, 403, origin);
     let body; try { body = await req.json(); } catch { return json({ error: 'JSON no válido' }, 400, origin); }
