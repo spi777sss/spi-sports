@@ -981,7 +981,8 @@ function oddsTab(m,s,anim){
 }
 
 /* ================= pronóstico: consenso de fuentes + análisis estadístico ================= */
-const PRED_URL=m=>`${PUSH_API}/predict?d=${new Date(m.ko).toISOString().slice(0,10)}`;
+const ST_URL='https://www.sportytrader.es';
+const PRED_URL=m=>`${PUSH_API}/predict?d=${new Date(m.ko).toISOString().slice(0,10)}&v=2`;
 function poissonGrid(lh,la){const pf=(l,k)=>{let p=Math.exp(-l);for(let i=1;i<=k;i++)p*=l/i;return p};const g=[];let H=0,D=0,A=0,O15=0,O25=0,O35=0,BT=0;
   for(let i=0;i<=9;i++)for(let j=0;j<=9;j++){const p=pf(lh,i)*pf(la,j);g.push([i,j,p]);if(i>j)H+=p;else if(i===j)D+=p;else A+=p;if(i+j>1)O15+=p;if(i+j>2)O25+=p;if(i+j>3)O35+=p;if(i>0&&j>0)BT+=p}
   const s=H+D+A;const grid=new Map(g.map(([i,j,p])=>[i+'-'+j,p/s]));g.sort((a,b)=>b[2]-a[2]);
@@ -1001,7 +1002,13 @@ function soccerModel(m,s){
   return{lh,la,...poissonGrid(lh,la),a,b,all,n:Math.min(a.st.gamesPlayed||0,b.st.gamesPlayed||0)};
 }
 // emparejar nombres de equipos entre webs distintas
-const ALIAS={internazionale:'inter','paris saint germain':'psg','paris sg':'psg','bayern munich':'bayern','bayern munchen':'bayern','manchester united':'man utd','manchester utd':'man utd','man united':'man utd','manchester city':'man city','wolverhampton wanderers':'wolves','nottingham forest':'nottm forest',"borussia monchengladbach":'gladbach','monchengladbach':'gladbach','atletico de madrid':'atletico madrid','atl madrid':'atletico madrid','athletic bilbao':'athletic club','tottenham hotspur':'tottenham','newcastle united':'newcastle','west ham united':'west ham','brighton hove albion':'brighton','olympique de marsella':'marseille','olympique marseille':'marseille','olympique lyonnais':'lyon','olympique de lyon':'lyon','sporting cp':'sporting lisbon','psv eindhoven':'psv','ajax amsterdam':'ajax'};
+const ALIAS={internazionale:'inter','paris saint germain':'psg','paris sg':'psg','bayern munich':'bayern','bayern munchen':'bayern','manchester united':'man utd','manchester utd':'man utd','man united':'man utd','manchester city':'man city','wolverhampton wanderers':'wolves','nottingham forest':'nottm forest',"borussia monchengladbach":'gladbach','monchengladbach':'gladbach','atletico de madrid':'atletico madrid','atl madrid':'atletico madrid','athletic bilbao':'athletic club','tottenham hotspur':'tottenham','newcastle united':'newcastle','west ham united':'west ham','brighton hove albion':'brighton','olympique de marsella':'marseille','olympique marseille':'marseille','olympique lyonnais':'lyon','olympique de lyon':'lyon','sporting cp':'sporting lisbon','psv eindhoven':'psv','ajax amsterdam':'ajax',
+  // nombres en español (SportyTrader) → los de ESPN
+  friburgo:'freiburg','sc friburgo':'freiburg',colonia:'cologne','fc colonia':'cologne',koln:'cologne',hamburgo:'hamburg','hamburger sv':'hamburg',wolfsburgo:'wolfsburg',augsburgo:'augsburg','borussia dortmund':'dortmund','bayer leverkusen':'leverkusen','eintracht francfort':'eintracht frankfurt','francfort':'eintracht frankfurt',stuttgart:'stuttgart',
+  marsella:'marseille',niza:'nice',estrasburgo:'strasbourg',monaco:'monaco',lyon:'lyon','olympique lyon':'lyon',
+  'inter de milan':'inter','inter milan':'inter',napoles:'napoli','as roma':'roma',
+  oporto:'porto','fc oporto':'porto','sporting de lisboa':'sporting lisbon','sporting cp':'sporting lisbon','sporting':'sporting lisbon',
+  'paris saint-germain':'psg','paris':'psg','bayern':'bayern','celta de vigo':'celta vigo','real betis':'betis','deportivo alaves':'alaves'};
 const STOPW=new Set(['fc','cf','ac','sc','cd','ud','sd','rc','rcd','afc','ssc','as','us','club','de','del','la','le','the','calcio','cp','sl','fk','sk','bk','if','ca','cr','ec','se','sv','tsg','vfl','1','04','05','1899','1909','1846']);
 function nkey(s){s=(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();return ALIAS[s]||s}
 function nsim(a,b){a=nkey(a);b=nkey(b);if(a===b)return 1;const A=a.split(' ').filter(t=>!STOPW.has(t)),B=b.split(' ').filter(t=>!STOPW.has(t));if(!A.length||!B.length)return 0;
@@ -1025,7 +1032,7 @@ function tierCards(mk,mainLabel,riskPool){
   return `<div class="tiers">${card('safe','Más segura',safe,'La opción con más probabilidad de acierto.')}${card('bal','Equilibrada',bal,'Buena probabilidad con algo más de premio.')}${card('risk','Con más premio',risk,'Menos probable, pero paga bastante más.')}</div>`;
 }
 function srcRows(srcs,labels){
-  return `<div class="srcs2">${srcs.map(x=>`<div class="src2"><div class="sh2"><b>${esc(x.name)}</b><span class="sub">${esc(x.sub||'')}</span><span class="spick">${esc(x.pick||'')}</span></div>${x.p?`<div class="prob prob-sm">${x.p.map((v,i)=>`<span class="${['p1','px','p2'][x.p.length===2&&i===1?2:i]}" style="width:${Math.round(v*100)}%">${Math.round(v*100)}</span>`).join('')}</div>`:''}</div>`).join('')}</div><div class="probl" style="margin-top:4px">${labels.map(l=>`<span>${esc(l)}</span>`).join('')}</div>`;
+  return `<div class="srcs2">${srcs.map(x=>`<div class="src2"><div class="sh2"><b>${x.url?`<a href="${esc(x.url)}" target="_blank" rel="noopener" style="color:inherit">${esc(x.name)} ↗</a>`:esc(x.name)}</b><span class="sub">${esc(x.sub||'')}</span><span class="spick">${esc(x.pick||'')}</span></div>${x.p?`<div class="prob prob-sm">${x.p.map((v,i)=>`<span class="${['p1','px','p2'][x.p.length===2&&i===1?2:i]}" style="width:${Math.round(v*100)}%">${Math.round(v*100)}</span>`).join('')}</div>`:''}</div>`).join('')}</div><div class="probl" style="margin-top:4px">${labels.map(l=>`<span>${esc(l)}</span>`).join('')}</div>`;
 }
 function predTab(m,s,anim){
   const o=parseOdds(m,s);const nv=o&&noVig(o);
@@ -1033,11 +1040,14 @@ function predTab(m,s,anim){
     need(URL.std(LG[m.lg]),600000);const pc=PUSH_API?need(PRED_URL(m),900000):null;
     const md=soccerModel(m,s);
     if(!md&&!nv&&!pc?.data)return (C.get(URL.std(LG[m.lg]))?.p||pc?.p)?skelBlock(320):`<div class="empty-state"><strong>Sin datos suficientes</strong><span>No hay cuotas, clasificación ni pronósticos externos para este partido.</span></div>`;
-    const sa=findPred(pc?.data?.statarea,m),vb=findPred(pc?.data?.vitibet,m);
+    const sa=findPred(pc?.data?.statarea,m),vb=findPred(pc?.data?.vitibet,m),stl=findPred(pc?.data?.sportytrader,m);
+    const stc=stl?need(`${PUSH_API}/st?p=${encodeURIComponent(stl.path)}`,1800000):null;const std=stc?.data;
     const srcs=[];
-    if(nv)srcs.push({name:'Mercado de apuestas',sub:o.prov+', sin margen',w:.35,p:[nv.h,nv.d,nv.a],o25:o.ou?.line===2.5&&o.ou.over.cur&&o.ou.under.cur?(1/o.ou.over.cur)/((1/o.ou.over.cur)+(1/o.ou.under.cur)):null});
-    if(sa){const t=sa.p1+sa.px+sa.p2||1;srcs.push({name:'Statarea',sub:'modelo estadístico + comunidad',w:.25,p:[sa.p1/t,sa.px/t,sa.p2/t],o15:sa.o15/100,o25:sa.o25/100,o35:sa.o35/100,btts:sa.btts/100})}
-    if(md)srcs.push({name:'Modelo SPI',sub:`Poisson · ${md.n} jornadas + forma`,w:.25,p:md.p,o15:md.o15,o25:md.o25,o35:md.o35,btts:md.btts});
+    if(nv)srcs.push({name:'Mercado de apuestas',sub:o.prov+', sin margen',w:.3,p:[nv.h,nv.d,nv.a],o25:o.ou?.line===2.5&&o.ou.over.cur&&o.ou.under.cur?(1/o.ou.over.cur)/((1/o.ou.over.cur)+(1/o.ou.under.cur)):null});
+    if(sa){const t=sa.p1+sa.px+sa.p2||1;srcs.push({name:'Statarea',sub:'modelo estadístico + comunidad',w:.2,p:[sa.p1/t,sa.px/t,sa.p2/t],o15:sa.o15/100,o25:sa.o25/100,o35:sa.o35/100,btts:sa.btts/100})}
+    if(md)srcs.push({name:'Modelo SPI',sub:`Poisson · ${md.n} jornadas + forma`,w:.2,p:md.p,o15:md.o15,o25:md.o25,o35:md.o35,btts:md.btts});
+    if(std?.p){const t=std.p[0]+std.p[1]+std.p[2]||1;const x={name:'SportyTrader',sub:`algoritmo + análisis${std.score?' · marcador '+std.score.join('-'):''}`,w:.15,p:std.p.map(v=>v/t),url:ST_URL+stl.path};
+      if(std.score){const g=poissonGrid(std.score[0]+.3,std.score[1]+.3);Object.assign(x,{o15:g.o15,o25:g.o25,o35:g.o35,btts:g.btts})}srcs.push(x)}
     if(vb){const g=poissonGrid(vb.score[0]+.3,vb.score[1]+.3);srcs.push({name:'Vitibet',sub:`marcador previsto ${vb.score[0]}-${vb.score[1]}`,w:.15,p:g.p,o15:g.o15,o25:g.o25,o35:g.o35,btts:g.btts})}
     srcs.forEach(x=>{const i=argmax(x.p);x.pick=['Gana '+m.home.short,'Empate','Gana '+m.away.short][i]});
     const avgOf=k=>{const xs=srcs.filter(x=>x[k]!=null);const w=xs.reduce((a,x)=>a+x.w,0);return w?xs.reduce((a,x)=>a+x[k]*x.w,0)/w:null};
@@ -1047,14 +1057,16 @@ function predTab(m,s,anim){
     let main=[`Gana ${m.home.name}`,'Empate',`Gana ${m.away.name}`][top],mp=P[top],dc=false;
     if(mp<.45){dc=true;if(P[0]>=P[2]){main=`${m.home.name} o empate`;mp=P[0]+P[1]}else{main=`${m.away.name} o empate`;mp=P[2]+P[1]}}
     // marcador exacto de consenso
-    let cs=null;if(md){const cands=md.top.map(([i,j])=>i+'-'+j);if(vb)cands.push(vb.score.join('-'));const sc=c=>md.grid.get(c)*(vb&&c===vb.score.join('-')?1.35:1);cs=[...new Set(cands)].sort((a,b)=>sc(b)-sc(a))[0]}
+    // marcador exacto: los más probables del modelo, con bonus si Vitibet o SportyTrader lo predicen
+    const ext=[vb?.score,std?.score].filter(Boolean).map(x=>x.join('-'));const csWho=c=>[vb&&vb.score.join('-')===c?'Vitibet':null,std?.score&&std.score.join('-')===c?'SportyTrader':null].filter(Boolean);
+    let cs=null;if(md){const cands=[...md.top.map(([i,j])=>i+'-'+j),...ext];const sc=c=>(md.grid.get(c)||0)*(1+.35*csWho(c).length);cs=[...new Set(cands)].sort((a,b)=>sc(b)-sc(a))[0]}
     const ou=o?.ou?.line===2.5?o.ou:null;
     const mk=[
       {label:`Gana ${m.home.name}`,p:P[0],odds:o?.h?.cur},{label:'Empate',p:P[1],odds:o?.d?.cur},{label:`Gana ${m.away.name}`,p:P[2],odds:o?.a?.cur},
       {label:`${m.home.short} o empate (1X)`,p:P[0]+P[1]},{label:`${m.away.short} o empate (X2)`,p:P[2]+P[1]},{label:'Sin empate (12)',p:P[0]+P[2]},
       ...(o15!=null?[{label:'Más de 1,5 goles',p:o15}]:[]),...(o25!=null?[{label:'Más de 2,5 goles',p:o25,odds:ou?.over?.cur},{label:'Menos de 2,5 goles',p:1-o25,odds:ou?.under?.cur}]:[]),...(o35!=null?[{label:'Menos de 3,5 goles',p:1-o35},{label:'Más de 3,5 goles',p:o35}]:[]),
       ...(btts!=null?[{label:'Ambos marcan: sí',p:btts},{label:'Ambos marcan: no',p:1-btts}]:[]),
-      ...(cs&&md?[{label:`Marcador exacto ${cs.replace('-','–')}`,p:md.grid.get(cs),note:vb&&cs===vb.score.join('-')?'coincide con Vitibet':'según el Modelo SPI'}]:[])
+      ...(cs&&md?[{label:`Marcador exacto ${cs.replace('-','–')}`,p:md.grid.get(cs),note:csWho(cs).length?'coincide con '+csWho(cs).join(' y '):'según el Modelo SPI'}]:[])
     ].filter(x=>x.p!=null&&x.p>0);
     // combinaciones en la dirección del favorito (con el reparto de goles del Modelo SPI)
     const risky=[];
@@ -1068,10 +1080,10 @@ function predTab(m,s,anim){
       <div class="conf"><span>Confianza ${confLabel(mp)}</span><span class="m"><i style="width:${anim?0:mp*100}%" data-w="${mp*100}"></i></span><b style="color:var(--fg)">${pct(mp)}</b></div></div>`;
     h+=`<div class="sec"><h4>Alternativas</h4>${tierCards(mk,dc?null:main,risky)}</div>`;
     h+=`<div class="sec"><h4>Probabilidades de consenso</h4>${probBar(P,[m.home.short+' gana','Empate',m.away.short+' gana'])}</div>`;
-    h+=`<div class="sec"><h4>Qué dice cada fuente</h4>${srcRows(srcs,[m.home.short,'Empate',m.away.short])}${sa&&sa.up!=null?`<p class="foot" style="padding:6px 0 0">Comunidad de Statarea: ${sa.up} a favor y ${sa.down} en contra de su pronóstico «${esc(sa.tip)}».</p>`:''}${!sa&&!vb&&PUSH_API?`<p class="foot" style="padding:6px 0 0">${pc?.p?'Buscando este partido en Statarea y Vitibet…':'Statarea y Vitibet no publican pronóstico para este partido.'}</p>`:''}</div>`;
+    h+=`<div class="sec"><h4>Qué dice cada fuente</h4>${srcRows(srcs,[m.home.short,'Empate',m.away.short])}${sa&&sa.up!=null?`<p class="foot" style="padding:6px 0 0">Comunidad de Statarea: ${sa.up} a favor y ${sa.down} en contra de su pronóstico «${esc(sa.tip)}».</p>`:''}${!sa&&!vb&&!stl&&PUSH_API?`<p class="foot" style="padding:6px 0 0">${pc?.p?'Buscando este partido en Statarea, Vitibet y SportyTrader…':'Statarea, Vitibet y SportyTrader no publican pronóstico para este partido.'}</p>`:''}</div>`;
     h+=`<div class="sec"><h4>Todas las opciones<span>prob. · cuota</span></h4><div class="mks">${mk.slice().sort((a,b)=>b.p-a.p).map(marketRow).join('')}</div></div>`;
     h+=analysisSoccer(m,s,md,{o25,btts,sa});
-    h+=`<p class="disc">Consenso ponderado: mercado de apuestas 35 %, Statarea 25 %, Modelo SPI 25 % y Vitibet 15%. Si falta una fuente, el peso se reparte entre las demás. Forebet, PredictZ y otras webs bloquean el acceso automático, por eso no se incluyen. La «cuota justa» es la que correspondería a esa probabilidad, y «valor» indica que la cuota real paga más de lo que debería. Es una estimación, no una garantía: si apuestas, hazlo con responsabilidad.</p>`;
+    h+=`<p class="disc">Consenso ponderado: mercado de apuestas 30 %, Statarea 20 %, Modelo SPI 20 %, SportyTrader 15 % y Vitibet 15 %. Si falta una fuente, el peso se reparte entre las demás. Forebet, PredictZ y otras webs bloquean el acceso automático, por eso no se incluyen. La «cuota justa» es la que correspondería a esa probabilidad, y «valor» indica que la cuota real paga más de lo que debería. Es una estimación, no una garantía: si apuestas, hazlo con responsabilidad.</p>`;
     return h;
   }
   // ---------- baloncesto: ESPN BPI + mercado + modelo SPI ----------

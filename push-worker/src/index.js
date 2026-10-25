@@ -50,6 +50,33 @@ async function statarea(date) {
   }
   return out;
 }
+// SportyTrader: lista de próximos partidos con su pronóstico; el detalle trae probabilidades y marcador exacto
+const ST = 'https://www.sportytrader.es';
+async function sportytrader() {
+  const h = await getText(`${ST}/pronosticos/futbol/`);
+  const out = [], seen = new Set();
+  for (const seg of h.split('data-navigation-url-value="/pronosticos/').slice(1)) {
+    const path = '/pronosticos/' + seg.slice(0, seg.indexOf('"'));
+    if (!/^\/pronosticos\/[a-z0-9-]+-\d+\/$/.test(path) || seen.has(path)) continue;
+    const names = [...seg.slice(0, 6000).matchAll(/<span class="font-semibold[^"]*break-words">([\s\S]*?)<\/span>/g)].map(m => strip(m[1]));
+    const when = strip((seg.match(/<p class="dark:text-white font-bold">([\s\S]*?)<\/p>/) || [])[1] || '');
+    const tip = strip((seg.match(/<p class=" text-center font-semibold ">([\s\S]*?)<\/p>/) || [])[1] || '');
+    if (names.length < 2) continue;
+    seen.add(path);
+    out.push({ home: names[0], away: names[1], when, tip, path });
+  }
+  return out;
+}
+async function sportytraderDetail(path) {
+  const h = await getText(ST + path);
+  const t = strip(h.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ' ')).replace(/\s+/g, ' ');
+  const i = t.indexOf('El algoritmo de Sportytrader');
+  const nums = i >= 0 ? [...t.slice(i, i + 900).matchAll(/(\d{1,3}(?:[.,]\d+)?)\s?%/g)].slice(0, 3).map(m => parseFloat(m[1].replace(',', '.'))) : [];
+  const sc = t.match(/marcador exacto[^.]{0,260}?(\d)\s?-\s?(\d)/i);
+  const tip = (t.match(/es: ([^.]{3,80})\. Probabilidades/) || [])[1] || '';
+  return { p: nums.length === 3 ? nums : null, score: sc ? [+sc[1], +sc[2]] : null, tip };
+}
+
 // Vitibet: marcador previsto y apuesta recomendada (publica los partidos del día)
 async function vitibet() {
   const h = await getText('https://www.vitibet.com/index.php?lang=en');
@@ -101,9 +128,16 @@ export default {
     if (req.method === 'GET' && url.pathname === '/predict') {
       const d = url.searchParams.get('d') || '';
       if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return json({ error: 'Fecha no válida' }, 400, origin);
-      const [sa, vb] = await Promise.all([statarea(d).catch(() => []), vitibet().catch(() => [])]);
-      const res = json({ date: d, statarea: sa, vitibet: vb, at: Date.now() }, 200, origin);
+      const [sa, vb, st] = await Promise.all([statarea(d).catch(() => []), vitibet().catch(() => []), sportytrader().catch(() => [])]);
+      const res = json({ date: d, statarea: sa, vitibet: vb, sportytrader: st, at: Date.now() }, 200, origin);
       res.headers.set('cache-control', 'public, max-age=900');
+      return res;
+    }
+    if (req.method === 'GET' && url.pathname === '/st') {
+      const p = url.searchParams.get('p') || '';
+      if (!/^\/pronosticos\/[a-z0-9-]+-\d+\/$/.test(p)) return json({ error: 'Ruta no válida' }, 400, origin);
+      const res = json(await sportytraderDetail(p).catch(() => ({ p: null, score: null })), 200, origin);
+      res.headers.set('cache-control', 'public, max-age=1800');
       return res;
     }
     if (req.method !== 'POST') return json({ error: 'Método no permitido' }, 405, origin);
