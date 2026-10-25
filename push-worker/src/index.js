@@ -14,9 +14,10 @@ const LEAGUES = {
   'mex.1': 'soccer', 'arg.1': 'soccer', 'bra.1': 'soccer', 'usa.1': 'soccer', 'nba': 'basketball',
 };
 const TYPES = {
-  soccer: ['start', 'goal', 'red', 'ht', 'ft'],
-  basketball: ['start', 'quarter', 'clutch', 'ft'],
+  soccer: ['lineup', 'start', 'goal', 'red', 'ht', 'ft', 'news'],
+  basketball: ['start', 'quarter', 'clutch', 'ft', 'news'],
 };
+const NEWS_EVERY_MIN = 5;
 const PUSH_HOSTS = /(^|\.)(push\.apple\.com|fcm\.googleapis\.com|googleapis\.com|push\.services\.mozilla\.com|notify\.windows\.com)$/;
 const MAX_TEAMS = 60;
 
@@ -127,6 +128,8 @@ export class Hub extends DurableObject {
     if (!ids.length) return;
     const followed = new Set(), lgs = new Set();
     for (const id of ids) for (const [k, t] of Object.entries(subs[id].teams)) { followed.add(k); lgs.add(t.lg); }
+    // los equipos también juegan copas europeas: se revisan siempre que se siga algún equipo de fútbol
+    if ([...lgs].some(l => LEAGUES[l] === 'soccer')) { lgs.add('uefa.champions'); lgs.add('uefa.europa'); }
 
     const state = (await this.ctx.storage.get('state')) || {};
     let dirty = false;
@@ -143,11 +146,50 @@ export class Hub extends DurableObject {
         if (!followed.has(hk) && !followed.has(ak)) continue;
         const cur = snapshot(c, sp, H, A);
         const prev = state[e.id];
-        if (!prev) { state[e.id] = cur; dirty = true; continue; } // primera vez: solo se registra, sin avisar
-        const evs = diff(prev, cur, c, sp, H, A);
-        if (evs.length || JSON.stringify(stripT(prev)) !== JSON.stringify(stripT(cur))) { state[e.id] = { ...cur, clutch: prev.clutch || cur.clutch }; dirty = true; }
-        for (const ev of evs) notes.push({ ...ev, teams: [hk, ak], tag: 'spi-' + e.id + '-' + ev.type + '-' + (ev.n || ''), url: `${APP_URL}?m=${encodeURIComponent(lg + '|' + e.id)}` });
+        const matchUrl = `${APP_URL}?m=${encodeURIComponent(lg + '|' + e.id)}`;
+        if (!prev) { state[e.id] = cur; dirty = true; }
+        else {
+          const evs = diff(prev, cur, c, sp, H, A);
+          if (evs.length || JSON.stringify(stripT(prev)) !== JSON.stringify(stripT(cur))) { state[e.id] = { ...prev, ...cur, clutch: prev.clutch || cur.clutch }; dirty = true; }
+          for (const ev of evs) notes.push({ ...ev, teams: [hk, ak], tag: 'spi-' + e.id + '-' + ev.type + '-' + (ev.n || ''), url: matchUrl });
+        }
+        // alineaciones: en la hora y media previa se consulta la ficha hasta que aparecen los onces
+        const toKo = Date.parse(e.date) - Date.now();
+        if (sp === 'soccer' && !state[e.id].lu && cur.s === 'pre' && toKo < 100 * 60e3 && toKo > -30 * 60e3) {
+          const lu = await lineups(lg, e.id, H, A);
+          if (lu && (lu.both || toKo < 15 * 60e3)) {
+            state[e.id].lu = true; dirty = true;
+            notes.push({ type: 'lineup', teams: [hk, ak], tag: 'spi-' + e.id + '-lineup', url: matchUrl, title: `📋 Alineaciones: ${lu.title}`, body: lu.body });
+          }
+        }
       }
+    }
+    // noticias de los equipos seguidos (cada pocos minutos)
+    if (new Date().getUTCMinutes() % NEWS_EVERY_MIN === 0) {
+      const seen = (await this.ctx.storage.get('news')) || {};
+      let newsDirty = false;
+      const wanted = new Map();
+      for (const id of ids) for (const [k, t] of Object.entries(subs[id].teams)) if (t.types.includes('news')) wanted.set(k, t);
+      await Promise.all([...wanted].map(async ([k, t]) => {
+        const [sp, tid] = k.split(':');
+        const d = await fetch(`${API}${sp}/${t.lg}/news?lang=es&region=us&team=${tid}&limit=8`, { cf: { cacheTtl: 120 } }).then(r => r.ok ? r.json() : null).catch(() => null);
+        if (!d) return;
+        const arts = (d.articles || []).filter(a => a.type !== 'Media' && a.id && a.headline);
+        const first = !seen[k];
+        const known = new Set(seen[k] || []);
+        let sent = 0;
+        for (const a of arts) {
+          if (known.has(a.id)) continue;
+          known.add(a.id); newsDirty = true;
+          const fresh = Date.now() - Date.parse(a.published || 0) < 6 * 36e5;
+          if (!first && fresh && sent < 2) {
+            sent++;
+            notes.push({ type: 'news', teams: [k], tag: 'spi-news-' + a.id, url: a.links?.web?.href || APP_URL, title: `📰 ${t.name || 'Noticias'}`, body: a.headline });
+          }
+        }
+        seen[k] = [...known].slice(-60);
+      }));
+      if (newsDirty) await this.ctx.storage.put('news', seen);
     }
     // limpia partidos de hace más de 3 días
     const old = Date.now() - 3 * 864e5;
@@ -158,9 +200,11 @@ export class Hub extends DurableObject {
     let gone = false;
     await Promise.all(ids.map(async id => {
       const s = subs[id];
+      const done = new Set();
       for (const n of notes) {
         const want = n.teams.some(k => s.teams[k]?.types.includes(n.type));
-        if (!want) continue;
+        if (!want || done.has(n.tag)) continue;
+        done.add(n.tag);
         const st = await this.send(s.sub, { title: n.title, body: n.body, tag: n.tag, url: n.url });
         if (st === 404 || st === 410) { delete subs[id]; gone = true; break; }
       }
@@ -169,7 +213,24 @@ export class Hub extends DurableObject {
   }
 }
 
-const stripT = s => { const { t, ...rest } = s; return rest; };
+const stripT = s => { const { t, lu, ...rest } = s; return rest; };
+async function lineups(lg, id, H, A) {
+  const s = await fetch(`${API}soccer/${lg}/summary?event=${id}`, { cf: { cacheTtl: 30 } }).then(r => r.ok ? r.json() : null).catch(() => null);
+  if (!s) return null;
+  const side = team => {
+    const r = (s.rosters || []).find(x => x.team?.id === team.team.id);
+    const xi = (r?.roster || []).filter(p => p.starter);
+    return xi.length >= 11 ? { name: team.team.shortDisplayName || team.team.displayName, f: r.formation || '', xi } : null;
+  };
+  const h = side(H), a = side(A);
+  if (!h && !a) return null;
+  const line = t => `${t.name}${t.f ? ' (' + t.f + ')' : ''}: ${t.xi.map(p => p.athlete?.lastName || p.athlete?.displayName || '').join(', ')}`;
+  return {
+    both: !!(h && a),
+    title: [h, a].filter(Boolean).map(t => t.name).join(' vs '),
+    body: [h, a].filter(Boolean).map(line).join('\n').slice(0, 600),
+  };
+}
 function clockSecs(c) { const s = c.status?.displayClock || ''; const m = s.match(/(\d+):(\d+)/); return m ? +m[1] * 60 + +m[2] : (parseFloat(s) || 0); }
 function snapshot(c, sp, H, A) {
   const t = c.status?.type || {};

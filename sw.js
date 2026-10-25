@@ -1,6 +1,6 @@
 // SPI Sports: guarda la app para que abra al instante y sin conexión.
 // Los datos de ESPN no se guardan: siempre se piden en directo.
-const CACHE = 'spi-sports-v2';
+const CACHE = 'spi-sports-v3';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
@@ -23,6 +23,8 @@ self.addEventListener('push', e => {
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   const url = (e.notification.data && e.notification.data.url) || './';
+  // las noticias abren el artículo; los avisos de partido abren la app en esa ficha
+  if (new URL(url, self.location.href).origin !== self.location.origin) { e.waitUntil(self.clients.openWindow(url)); return; }
   e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(ws => {
     for (const w of ws) { if ('focus' in w) { if ('navigate' in w) w.navigate(url); return w.focus(); } }
     return self.clients.openWindow(url);
