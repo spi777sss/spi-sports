@@ -13,6 +13,9 @@ const LEAGUES = {
   'uefa.champions': 'soccer', 'uefa.europa': 'soccer', 'por.1': 'soccer', 'ned.1': 'soccer',
   'mex.1': 'soccer', 'arg.1': 'soccer', 'bra.1': 'soccer', 'usa.1': 'soccer', 'nba': 'basketball',
 };
+// copas en las que juegan los equipos de las ligas: se revisan siempre que se siga algún equipo de fútbol
+const CUPS = ['uefa.champions', 'uefa.europa', 'uefa.europa.conf', 'conmebol.libertadores', 'conmebol.sudamericana', 'esp.copa_del_rey', 'eng.fa', 'eng.league_cup', 'ita.coppa_italia', 'ger.dfb_pokal', 'fra.coupe_de_france', 'arg.copa'];
+for (const c of CUPS) LEAGUES[c] = 'soccer';
 const TYPES = {
   soccer: ['lineup', 'start', 'goal', 'red', 'ht', 'ft', 'news'],
   basketball: ['start', 'quarter', 'clutch', 'ft', 'news'],
@@ -246,7 +249,7 @@ export class Hub extends DurableObject {
     const followed = new Set(), lgs = new Set();
     for (const id of ids) for (const [k, t] of Object.entries(subs[id].teams)) { followed.add(k); lgs.add(t.lg); }
     // los equipos también juegan copas europeas: se revisan siempre que se siga algún equipo de fútbol
-    if ([...lgs].some(l => LEAGUES[l] === 'soccer')) { lgs.add('uefa.champions'); lgs.add('uefa.europa'); }
+    if ([...lgs].some(l => LEAGUES[l] === 'soccer')) for (const c of CUPS) lgs.add(c);
 
     const state = (await this.ctx.storage.get('state')) || {};
     let dirty = false;
