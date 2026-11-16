@@ -107,6 +107,27 @@ async function sportytraderTennis() {
   return out;
 }
 
+// Llaves: partidos de eliminatoria de dos años (las temporadas europeas cruzan el año), en formato ligero
+const KO = /(round-of|quarterfinal|semifinal|final|knockout|playoff|octavos|cuartos|liguilla|round-one|conference-semi|conference-final|wild-card|repechaje|play-in)/i;
+const NOT_KO = /(regular-season|league-phase|group|torneo-apertura$|torneo-clausura$|qualifying|preliminary|first-round|second-round|third-round)/i;
+async function bracket(lg, years) {
+  const out = [];
+  for (const y of years) {
+    const d = await fetch(`${API}soccer/${lg}/scoreboard?dates=${y}&limit=1000`, { cf: { cacheTtl: 600, cacheEverything: true } }).then(r => r.ok ? r.json() : null).catch(() => null);
+    for (const e of d?.events || []) {
+      const slug = e.season?.slug || '';
+      if (!KO.test(slug) || NOT_KO.test(slug)) continue;
+      const c = e.competitions?.[0]; if (!c) continue;
+      const t = x => ({ id: x.team?.id, name: x.team?.displayName, short: x.team?.abbreviation, logo: x.team?.logo, score: x.score, winner: !!x.winner, so: x.shootoutScore ?? null, agg: x.aggregateScore ?? null, ha: x.homeAway });
+      const cs = c.competitors || [];
+      out.push({ id: e.id, date: e.date, slug, season: e.season?.year, st: c.status?.type?.state, stn: c.status?.type?.name, clock: c.status?.displayClock, note: c.notes?.[0]?.headline || '',
+        series: c.series ? { done: !!c.series.completed, comp: (c.series.competitors || []).map(s => ({ id: s.id, agg: s.aggregateScore, w: !!s.winner })) } : null,
+        teams: cs.map(t) });
+    }
+  }
+  return out;
+}
+
 // Vitibet: marcador previsto y apuesta recomendada (publica los partidos del día)
 async function vitibet() {
   const h = await getText('https://www.vitibet.com/index.php?lang=en');
@@ -161,6 +182,14 @@ export default {
       const [sa, vb, st] = await Promise.all([statarea(d).catch(() => []), vitibet().catch(() => []), sportytrader().catch(() => [])]);
       const res = json({ date: d, statarea: sa, vitibet: vb, sportytrader: st, at: Date.now() }, 200, origin);
       res.headers.set('cache-control', 'public, max-age=900');
+      return res;
+    }
+    if (req.method === 'GET' && url.pathname === '/bracket') {
+      const lg = url.searchParams.get('lg') || '';
+      if (LEAGUES[lg] !== 'soccer') return json({ error: 'Competición no válida' }, 400, origin);
+      const y = new Date().getUTCFullYear();
+      const res = json({ lg, ties: await bracket(lg, [y - 1, y]), at: Date.now() }, 200, origin);
+      res.headers.set('cache-control', 'public, max-age=600');
       return res;
     }
     if (req.method === 'GET' && url.pathname === '/tennis') {
