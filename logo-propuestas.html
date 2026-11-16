@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPI Sports · propuestas de logo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=Manrope:wght@500;700;800&display=swap">
+<style>
+:root{--ink:#07090d;--surface:#10141b;--line:rgba(255,255,255,.08);--fg:#f1f4f9;--muted:#9aa4b4;--amber:#ffb21e;--live:#ff3d5a}
+*{box-sizing:border-box}
+body{margin:0;background:#05070a;color:var(--fg);font-family:Manrope,system-ui,sans-serif;padding:40px 24px 60px}
+h1{font-family:"Big Shoulders Display",sans-serif;font-weight:900;font-size:44px;margin:0 0 6px;text-transform:uppercase;letter-spacing:.01em}
+.lead{color:var(--muted);margin:0 0 32px;max-width:70ch;line-height:1.5}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;max-width:1400px}
+.c{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:22px;display:flex;flex-direction:column;gap:18px}
+.c h2{margin:0;font-size:20px;font-weight:800}
+.c p{margin:0;color:var(--muted);font-size:14px;line-height:1.5}
+.big{display:grid;place-items:center;background:#000;border-radius:16px;padding:22px}
+.big svg{width:220px;height:220px;display:block}
+.row{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.home{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.home svg{width:60px;height:60px;border-radius:14px;display:block}
+.tiny svg{width:29px;height:29px;border-radius:7px}
+.bar{flex:1;min-width:220px;height:56px;border-radius:12px;background:#0b0e14;border:1px solid var(--line);display:flex;align-items:center;padding:0 14px}
+.bar.light{background:#fff}
+.bar svg{height:30px;width:auto;display:block}
+.k{font-size:12px;color:var(--muted)}
+@media (max-width:1100px){.grid{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<h1>SPI Sports · logo</h1>
+<p class="lead">Tres direcciones nacidas del propio deporte. Cada una se ve en grande, como ícono del iPhone (60 px y 29 px) y como logotipo en la cabecera, sobre oscuro y sobre claro.</p>
+
+<!-- glifos LED 5x7 para la propuesta 1 (se dibujan con script) -->
+<div class="grid">
+
+  <section class="c">
+    <h2>1 · Marcador LED</h2>
+    <p>Las letras se forman con puntos, como el marcador electrónico de un estadio. Los puntos apagados se intuyen detrás y el rojo es el punto de «en vivo». El acento pasaría a ser ámbar.</p>
+    <div class="big"><svg id="led-big" viewBox="0 0 512 512"></svg></div>
+    <div class="row">
+      <div class="home"><svg class="led-icon" viewBox="0 0 512 512"></svg>Ícono</div>
+      <div class="home tiny"><svg class="led-icon" viewBox="0 0 512 512"></svg>Ajustes</div>
+      <div class="bar"><svg class="led-word" viewBox="0 0 520 120"></svg></div>
+    </div>
+    <div class="bar light"><svg class="led-word light" viewBox="0 0 520 120"></svg></div>
+  </section>
+
+  <section class="c">
+    <h2>2 · Paleta de marcador</h2>
+    <p>Las letras en una paleta partida por la mitad, como el marcador mecánico de chapas que se voltean. Tiene peso, es reconocible y aguanta muy bien en pequeño.</p>
+    <div class="big"><svg viewBox="0 0 512 512" class="flap"></svg></div>
+    <div class="row">
+      <div class="home"><svg class="flap" viewBox="0 0 512 512"></svg>Ícono</div>
+      <div class="home tiny"><svg class="flap" viewBox="0 0 512 512"></svg>Ajustes</div>
+      <div class="bar"><svg class="flap-word" viewBox="0 0 520 120"></svg></div>
+    </div>
+    <div class="bar light"><svg class="flap-word light" viewBox="0 0 520 120"></svg></div>
+  </section>
+
+  <section class="c">
+    <h2>3 · Punto en vivo</h2>
+    <p>«spi» en minúscula condensada, y el punto de la i es una pelota roja: el mismo punto que en la app marca lo que se está jugando. Es la opción más sencilla y la más fácil de recordar.</p>
+    <div class="big"><svg viewBox="0 0 512 512" class="dot"></svg></div>
+    <div class="row">
+      <div class="home"><svg class="dot" viewBox="0 0 512 512"></svg>Ícono</div>
+      <div class="home tiny"><svg class="dot" viewBox="0 0 512 512"></svg>Ajustes</div>
+      <div class="bar"><svg class="dot-word" viewBox="0 0 520 120"></svg></div>
+    </div>
+    <div class="bar light"><svg class="dot-word light" viewBox="0 0 520 120"></svg></div>
+  </section>
+
+</div>
+
+<script>
+// ---------- 1 · LED: letras de 5x7 puntos
+const G={S:['.###.','#...#','#....','.###.','....#','#...#','.###.'],P:['####.','#...#','#...#','####.','#....','#....','#....'],I:['.###.','..#..','..#..','..#..','..#..','..#..','.###.']};
+function ledText(word,x0,y0,step,r,on,off){let s='';[...word].forEach((ch,k)=>{const g=G[ch];for(let y=0;y<7;y++)for(let x=0;x<5;x++){const lit=g[y][x]==='#';const cx=x0+(k*6+x)*step,cy=y0+y*step;s+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${lit?on:off}"/>`}});return s}
+const amber='#ffb21e';
+function ledIcon(){const step=26,r=10.4;const w=(3*6-1)*step,x0=(512-w)/2+step/2-step/2+3,y0=(512-6*step)/2;
+  return `<rect width="512" height="512" rx="0" fill="#07090d"/><rect x="40" y="40" width="432" height="432" rx="56" fill="#0d1118" stroke="rgba(255,178,30,.18)" stroke-width="3"/>`+ledText('SPI',x0+8,y0,step,r,amber,'rgba(255,178,30,.10)')+`<circle cx="430" cy="92" r="22" fill="#ff3d5a"/><circle cx="430" cy="92" r="34" fill="none" stroke="rgba(255,61,90,.35)" stroke-width="6"/>`}
+document.getElementById('led-big').innerHTML=ledIcon();
+document.querySelectorAll('.led-icon').forEach(s=>s.innerHTML=ledIcon());
+document.querySelectorAll('.led-word').forEach(s=>{const light=s.classList.contains('light');const on=light?'#c27800':amber,off=light?'rgba(194,120,0,.12)':'rgba(255,178,30,.12)';
+  s.innerHTML=ledText('SPI',14,18,13.5,5.4,on,off)+`<circle cx="243" cy="20" r="8" fill="#ff3d5a"/><text x="268" y="96" font-family="Big Shoulders Display" font-weight="800" font-size="62" letter-spacing="9" fill="${light?'#0b1220':'#f1f4f9'}">SPORTS</text>`});
+
+// ---------- 2 · paleta partida de marcador mecánico
+function flapIcon(){return `<rect width="512" height="512" fill="#07090d"/>
+  <defs><clipPath id="top"><rect x="56" y="96" width="400" height="157" rx="34"/></clipPath><clipPath id="bot"><rect x="56" y="259" width="400" height="157" rx="34"/></clipPath>
+  <linearGradient id="gt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f2633"/><stop offset="1" stop-color="#171d28"/></linearGradient>
+  <linearGradient id="gb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#141a24"/><stop offset="1" stop-color="#10151e"/></linearGradient></defs>
+  <rect x="56" y="96" width="400" height="157" rx="34" fill="url(#gt)"/><rect x="56" y="259" width="400" height="157" rx="34" fill="url(#gb)"/>
+  <g clip-path="url(#top)"><text x="256" y="383" text-anchor="middle" font-family="Big Shoulders Display" font-weight="900" font-size="300" fill="#f6f3ea" letter-spacing="2">SPI</text></g>
+  <g clip-path="url(#bot)"><text x="256" y="383" text-anchor="middle" font-family="Big Shoulders Display" font-weight="900" font-size="300" fill="#e7e2d6" letter-spacing="2">SPI</text></g>
+  <rect x="46" y="250" width="20" height="12" rx="4" fill="#3a4354"/><rect x="446" y="250" width="20" height="12" rx="4" fill="#3a4354"/>
+  <circle cx="424" cy="128" r="14" fill="#ff3d5a"/>`}
+document.querySelectorAll('svg.flap').forEach(s=>s.innerHTML=flapIcon());
+document.querySelectorAll('.flap-word').forEach((s,i)=>{const light=s.classList.contains('light');const id='w'+i;
+  s.innerHTML=`<defs><clipPath id="${id}t"><rect x="4" y="8" width="132" height="51" rx="12"/></clipPath><clipPath id="${id}b"><rect x="4" y="62" width="132" height="51" rx="12"/></clipPath></defs>
+  <rect x="4" y="8" width="132" height="51" rx="12" fill="${light?'#1d2430':'#1f2633'}"/><rect x="4" y="62" width="132" height="51" rx="12" fill="${light?'#141a24':'#141a24'}"/>
+  <g clip-path="url(#${id}t)"><text x="70" y="103" text-anchor="middle" font-family="Big Shoulders Display" font-weight="900" font-size="100" fill="#f6f3ea">SPI</text></g>
+  <g clip-path="url(#${id}b)"><text x="70" y="103" text-anchor="middle" font-family="Big Shoulders Display" font-weight="900" font-size="100" fill="#e7e2d6">SPI</text></g>
+  <circle cx="126" cy="18" r="6" fill="#ff3d5a"/>
+  <text x="156" y="88" font-family="Big Shoulders Display" font-weight="800" font-size="60" letter-spacing="9" fill="${light?'#0b1220':'#f1f4f9'}">SPORTS</text>`});
+
+// ---------- 3 · punto en vivo: la i lleva una pelota roja
+function ball(cx,cy,r){return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#ff3d5a"/><path d="M${cx} ${cy-r*.42} l${r*.4} ${r*.29} l${-r*.15} ${r*.47} h${-r*.5} l${-r*.15} ${-r*.47}z" fill="#07090d" opacity=".9"/>`}
+function dotIcon(){return `<rect width="512" height="512" fill="#0b0e14"/>
+  <text x="246" y="392" text-anchor="middle" font-family="Big Shoulders Display" font-weight="900" font-size="330" fill="#f6f3ea" letter-spacing="-4">spı</text>${ball(359,132,38)}`}
+document.querySelectorAll('svg.dot').forEach(s=>s.innerHTML=dotIcon());
+document.querySelectorAll('.dot-word').forEach(s=>{const light=s.classList.contains('light');const ink=light?'#0b1220':'#f6f3ea';
+  s.innerHTML=`<text x="6" y="98" font-family="Big Shoulders Display" font-weight="900" font-size="120" fill="${ink}" letter-spacing="-2">spı</text>${ball(124,25,14)}
+  <text x="166" y="96" font-family="Big Shoulders Display" font-weight="800" font-size="58" letter-spacing="9" fill="${ink}">SPORTS</text>`});
+</script>
+</body>
+</html>

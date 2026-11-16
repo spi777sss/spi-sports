@@ -8,7 +8,7 @@
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0e14">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
 <meta name="color-scheme" content="dark light">
-<meta name="spi-build" content="2026-11-16.2">
+<meta name="spi-build" content="2026-11-16.3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SPI Sports">
@@ -27,7 +27,7 @@
 :root{
   --bg:#07090d; --surface:#0f131a; --surface-2:#151a23; --surface-3:#1d2330; --line:rgba(255,255,255,.07); --line-2:rgba(255,255,255,.045);
   --fg:#f1f4f9; --muted:#9aa4b4; --faint:#7a8597;
-  --accent:#4f7dff; --accent-2:#7b9cff; --accent-soft:rgba(79,125,255,.15); --on-accent:#fff;
+  --accent:#ffb21e; --accent-2:#ffc451; --accent-soft:rgba(255,178,30,.14); --on-accent:#1a1100; --c2:#3cc9b0;
   --live:#ff3d5a; --live-soft:rgba(255,61,90,.14);
   --up:#2fd179; --down:#ff5a5a; --amber:#f6b73c;
   --z-ucl:#4f7dff; --z-uclq:#8fb0ff; --z-uel:#f08c2a; --z-uecl:#22c3a6; --z-relpo:#ff8a5c; --z-rel:#ff4d5e;
@@ -50,7 +50,7 @@
 @media (prefers-color-scheme: light){:root{
   --bg:#eef1f6; --surface:#ffffff; --surface-2:#f5f7fa; --surface-3:#eaeef4; --line:rgba(12,20,36,.09); --line-2:rgba(12,20,36,.055);
   --fg:#0b1220; --muted:#515b6e; --faint:#687284;
-  --accent:#2b56f0; --accent-2:#2b56f0; --accent-soft:rgba(43,86,240,.1); --on-accent:#fff;
+  --accent:#e89400; --accent-2:#9a5a00; --accent-soft:rgba(232,148,0,.13); --on-accent:#1a1100; --c2:#0f8f7a;
   --live:#e11d48; --live-soft:rgba(225,29,72,.09);
   --up:#15955a; --down:#dc2626; --amber:#c27803;
   --z-ucl:#2b56f0; --z-uclq:#7f9cf5; --z-uel:#e07a10; --z-uecl:#0f9d84; --z-relpo:#f0703c; --z-rel:#dc2626;
@@ -102,9 +102,14 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .top{position:sticky;top:0;z-index:30;background:var(--glass);-webkit-backdrop-filter:saturate(1.6) blur(18px);backdrop-filter:saturate(1.6) blur(18px);border-bottom:1px solid var(--line);margin-top:calc(-1 * env(safe-area-inset-top,0px));padding-top:env(safe-area-inset-top,0px)}
 .top-in{display:flex;align-items:center;gap:14px;padding-block:10px;padding-left:var(--gut-l);padding-right:var(--gut-r);max-width:1600px;margin:0 auto}
 .brand{display:flex;align-items:center;gap:8px;white-space:nowrap;line-height:1}
-.brand-mark{display:grid;place-items:center;height:28px;padding:0 7px;border-radius:7px;background:var(--accent);color:#fff;font-family:var(--f-display);font-weight:900;font-size:20px;letter-spacing:.02em;position:relative}
-.brand-mark::after{content:"";position:absolute;right:-3px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--live);box-shadow:0 0 0 2px var(--bg)}
-.brand-word{font-family:var(--f-display);font-weight:800;font-size:20px;letter-spacing:.14em;text-transform:uppercase}
+.logo-word{font-family:var(--f-display);font-weight:900;font-size:34px;line-height:.8;letter-spacing:-.01em;color:var(--fg);display:inline-flex;align-items:flex-end;padding-top:6px}
+.logo-word .li{position:relative;display:inline-block}
+/* la pelota es el punto de la i y late cuando hay partidos en juego */
+.logo-word .ball{position:absolute;left:50%;top:-.3em;width:.36em;height:.36em;margin-left:-.19em;border-radius:50%;background:var(--live);box-shadow:0 0 0 2px var(--glass)}
+.logo-word .ball::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--live);opacity:0}
+.brand.is-live .logo-word .ball::after{animation:ballPing 2.2s var(--ease-out) infinite}
+@keyframes ballPing{0%{transform:scale(1);opacity:.7}70%,100%{transform:scale(2.4);opacity:0}}
+.brand-word{font-family:var(--f-display);font-weight:800;font-size:17px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);align-self:flex-end;padding-bottom:1px}
 .livepill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--live);padding:3px 9px;border-radius:99px;background:var(--live-soft)}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--live);flex:none;display:inline-block}
 .search{position:relative;flex:1;max-width:440px;margin-left:auto}
@@ -285,7 +290,7 @@ picture.lp{display:inline-flex;flex:none}
 /* probabilidades */
 .prob{display:flex;height:34px;border-radius:10px;overflow:hidden;font-size:12px;font-weight:800;gap:2px}
 .prob span{display:grid;place-items:center;min-width:0;overflow:hidden;white-space:nowrap;transition:width .55s var(--ease-out)}
-.prob .p1{background:var(--accent);color:#fff}
+.prob .p1{background:var(--accent);color:var(--on-accent)}
 .prob .px{background:var(--surface-3);color:var(--fg)}
 .prob .p2{background:var(--fg);color:var(--bg)}
 .probl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px;gap:6px;font-weight:600}
@@ -400,14 +405,14 @@ picture.lp{display:inline-flex;flex:none}
 .chart .mid{stroke:var(--faint);stroke-width:1;stroke-dasharray:3 4;opacity:.6}
 .chart text{fill:var(--faint);font-size:11px;font-family:var(--f-body);font-weight:600}
 .chart .ln{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round;stroke-dasharray:1;animation:draw .9s var(--ease-out) both}
-.chart .ln.c2{stroke:var(--amber)} .chart .ln.c3{stroke:var(--fg);opacity:.75}
+.chart .ln.c2{stroke:var(--c2)} .chart .ln.c3{stroke:var(--fg);opacity:.75}
 .chart .ar{fill:var(--accent);opacity:.12;animation:fade .6s .2s ease both}
 .chart .ep{fill:var(--accent);stroke:var(--surface);stroke-width:2;animation:fade .25s .8s both}
-.chart .ep.c2{fill:var(--amber)} .chart .ep.c3{fill:var(--fg)}
+.chart .ep.c2{fill:var(--c2)} .chart .ep.c3{fill:var(--fg)}
 .chart .ept{fill:var(--accent-2);font-weight:800;font-size:12px;animation:fade .25s .8s both}
 .chart.static .ln,.chart.static .ar,.chart.static .ep,.chart.static .ept{animation:none}
 .gmap .gp{stroke:#fff;stroke-width:1.5}
-.gmap .gp.h{fill:var(--accent)} .gmap .gp.a{fill:var(--amber)}
+.gmap .gp.h{fill:var(--accent)} .gmap .gp.a{fill:var(--c2)}
 .gmap .pl2{fill:var(--pitch)} .gmap .pln{fill:none;stroke:var(--pitch-line);stroke-width:1.5}
 .gmap circle.gp{animation:fade .3s var(--ease-out) both}
 
@@ -597,7 +602,7 @@ table.tb{width:100%;border-collapse:collapse;font-size:13px}
 .set sup{position:absolute;top:-4px;right:-1px;font-size:9px;font-family:var(--f-body)}
 .tphoto{display:block;width:64px;height:64px;border-radius:50%;object-fit:cover;object-position:50% 15%;background:var(--surface-3);box-shadow:0 0 0 2px var(--line)}
 .pphoto{flex:none;width:76px;height:76px;border-radius:22px;object-fit:cover;object-position:50% 12%;background:var(--surface-3)}
-.lcrest.tn-atp{background:#2b56f0;color:#fff}.lcrest.tn-wta{background:#7a3cf0;color:#fff}
+.lcrest.tn-atp{background:#2b56f0;color:#fff}.lcrest.tn-wta{background:#0f8f7a;color:#fff}
 .phits{display:flex;flex-direction:column}
 .phit{display:flex;align-items:center;gap:12px;padding:9px 6px;border-bottom:1px solid var(--line-2);width:100%;border-radius:10px;text-align:left}
 .phit:last-child{border-bottom:0}
@@ -619,7 +624,7 @@ table.tb{width:100%;border-collapse:collapse;font-size:13px}
 
 /* notificaciones */
 .bell{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--muted);padding:4px 10px;border-radius:99px;border:1px solid var(--line)}
-.bell[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.bell[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .bell.ring svg{animation:ring .5s var(--ease-out);transform-origin:50% 10%}
 @keyframes ring{0%{transform:rotate(0)}25%{transform:rotate(14deg)}55%{transform:rotate(-10deg)}80%{transform:rotate(5deg)}100%{transform:rotate(0)}}
 .ncard{padding:16px;display:flex;flex-direction:column;gap:12px}
@@ -637,7 +642,7 @@ table.tb{width:100%;border-collapse:collapse;font-size:13px}
 .ntype{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:99px;border:1px solid var(--line);font-size:12.5px;font-weight:700;color:var(--muted)}
 .ntype[aria-pressed="true"]{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 60%,transparent);color:var(--fg)}
 .ntype .tick{width:14px;height:14px;border-radius:50%;border:1.5px solid currentColor;display:grid;place-items:center;opacity:.6}
-.ntype[aria-pressed="true"] .tick{background:var(--accent);border-color:var(--accent);color:#fff;opacity:1}
+.ntype[aria-pressed="true"] .tick{background:var(--accent);border-color:var(--accent);color:var(--on-accent);opacity:1}
 .npanel{margin:0 18px 18px;padding:14px;border-radius:14px;background:var(--surface-2);border:1px solid var(--line);display:flex;flex-direction:column;gap:10px;animation:rise .22s var(--ease-out)}
 .npanel .k{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
 .toast{position:fixed;left:50%;bottom:calc(var(--tabbar) + 16px + env(safe-area-inset-bottom,0px));z-index:80;max-width:min(420px,calc(100% - 32px));padding:12px 16px;border-radius:14px;background:var(--fg);color:var(--bg);font-weight:700;font-size:13.5px;box-shadow:var(--shadow);transform:translate(-50%,0);opacity:1;transition:transform .3s var(--ease-drawer),opacity .2s ease}
@@ -667,7 +672,7 @@ table.tb{width:100%;border-collapse:collapse;font-size:13px}
   .icobtn{display:grid;margin-left:auto}
   .clock{display:none}
   .hbtn{display:none}
-  .brand-word{font-size:18px}
+  .brand-word{font-size:15px}
   .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
   .cols,.cols3{grid-template-columns:minmax(0,1fr)}
   .tb .hm{display:none}
@@ -710,7 +715,7 @@ table.tb{width:100%;border-collapse:collapse;font-size:13px}
 </head>
 <body>
 <header class="top"><div class="top-in">
-  <button class="brand press" data-act="brand" aria-label="SPI Sports, ir al inicio"><span class="brand-mark" aria-hidden="true">SPI</span><span class="brand-word" aria-hidden="true">Sports</span></button>
+  <button class="brand press" data-act="brand" aria-label="SPI Sports, ir al inicio"><span class="logo-word" aria-hidden="true">sp<span class="li">ı<i class="ball"></i></span></span><span class="brand-word" aria-hidden="true">Sports</span></button>
   <span class="livepill" id="livepill" hidden><span class="dot pulse"></span><span id="livecount"></span></span>
   <div class="search" id="searchbox">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -972,7 +977,7 @@ function renderHead(){
   const d=new Date();$('#clock').textContent=DOW[d.getDay()]+' '+d.getDate()+' '+MON[d.getMonth()]+' · '+hm(d);
   $('#favbtn').innerHTML=`${ICON.star(S.favs.size>0)}<span>Mis equipos</span>${S.favs.size?`<span class="cnt">${S.favs.size}</span>`:''}`;
   const n=LEAGUES.filter(l=>l.sp===S.sport).reduce((a,l)=>a+liveCount(l),0);
-  $('#livepill').hidden=!n;$('#livecount').textContent=n+' en vivo';
+  $('#livepill').hidden=!n;$('#livecount').textContent=n+' en vivo';$('.brand').classList.toggle('is-live',!!n);
   // partidos en vivo de tus equipos: número en el ícono de la app (iPhone con la app instalada) y en el título
   const lv=new Set();if(S.favs.size)for(const lg of LEAGUES)for(const u of URL.sbs(lg,today()))for(const m of matchesOf(lg,peek(u)))if((m.st==='live'||m.st==='ht')&&isFavM(m))lv.add(m.id);const fl=lv.size;
   document.title=fl?`(${fl}) SPI Sports`:'SPI Sports';
@@ -1221,10 +1226,10 @@ function oddsChart(m,o,hist,anim){
   const x=i=>pl+(W-pl-pr)*(i/(n-1));const y=v=>pt+(H-pt-pb)*(1-(v-lo)/(hi-lo));
   const cls={h:'',d:'c2',a:'c3'};
   let g='';for(let i=0;i<=3;i++){const v=lo+(hi-lo)*i/3;g+=`<line class="grid" x1="${pl}" x2="${W-pr}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/><text x="${pl-6}" y="${(y(v)+4).toFixed(1)}" text-anchor="end">${v.toFixed(2)}</text>`}
-  const lines=keys.map(k=>{const d=pts.map((p,i)=>p[k]==null?'':(i&&pts[i-1][k]!=null?'L':'M')+x(i).toFixed(1)+' '+y(p[k]).toFixed(1)).join(' ');const lv=pts[n-1][k];return `<path class="ln ${cls[k]}" pathLength="1" d="${d}"/><circle class="ep ${cls[k]}" cx="${x(n-1)}" cy="${y(lv)}" r="4"/><text class="ept" x="${x(n-1)+7}" y="${y(lv)+4}" style="fill:${k==='h'?'var(--accent-2)':k==='d'?'var(--amber)':'var(--fg)'}">${lv?.toFixed(2)}</text>`}).join('');
+  const lines=keys.map(k=>{const d=pts.map((p,i)=>p[k]==null?'':(i&&pts[i-1][k]!=null?'L':'M')+x(i).toFixed(1)+' '+y(p[k]).toFixed(1)).join(' ');const lv=pts[n-1][k];return `<path class="ln ${cls[k]}" pathLength="1" d="${d}"/><circle class="ep ${cls[k]}" cx="${x(n-1)}" cy="${y(lv)}" r="4"/><text class="ept" x="${x(n-1)+7}" y="${y(lv)+4}" style="fill:${k==='h'?'var(--accent-2)':k==='d'?'var(--c2)':'var(--fg)'}">${lv?.toFixed(2)}</text>`}).join('');
   const lab0=pts[0].t?hm(pts[0].t):'Apertura';
   return `<div class="chart ${anim?'':'static'}"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolución de las cuotas">${g}${lines}<text x="${pl}" y="${H-4}">${lab0}</text><text x="${W-pr}" y="${H-4}" text-anchor="end">Ahora</text></svg></div>
-   <div class="legend2"><span style="--c:var(--accent)"><i></i>${esc(m.home.short)} gana</span>${o.d?`<span style="--c:var(--amber)"><i></i>Empate</span>`:''}<span style="--c:var(--fg)"><i></i>${esc(m.away.short)} gana</span></div>`;
+   <div class="legend2"><span style="--c:var(--accent)"><i></i>${esc(m.home.short)} gana</span>${o.d?`<span style="--c:var(--c2)"><i></i>Empate</span>`:''}<span style="--c:var(--fg)"><i></i>${esc(m.away.short)} gana</span></div>`;
 }
 function ocard(label,x,best,id){
   if(!x||!x.cur)return `<div class="ocard"><span class="ol">${esc(label)}</span><span class="ov">–</span></div>`;
@@ -1455,7 +1460,7 @@ function goalMap(evs,m){
   const g=evs.filter(e=>isGoal(e)&&e.fieldPositionX!=null);if(!g.length)return'';
   const W=300,H=200;
   const dots=g.map((e,i)=>{const side=e.team?.id===m.away.id?'a':'h';const fx=Math.max(50,e.fieldPositionX);return `<circle class="gp ${side}" cx="${(((fx-50)/50)*W).toFixed(1)}" cy="${(H*(e.fieldPositionY??50)/100).toFixed(1)}" r="7" style="animation-delay:${i*60}ms"><title>${esc((e.participants?.[0]?.athlete?.displayName||'')+' '+minOf(e))}</title></circle>`}).join('');
-  return `<div class="sec gmap"><h4>Mapa de goles <span><i class="ldot" style="--c:var(--accent)"></i>${esc(m.home.short)} <i class="ldot" style="--c:var(--amber)"></i>${esc(m.away.short)}</span></h4><svg viewBox="-6 -6 ${W+12} ${H+12}" style="width:100%;height:auto;border-radius:12px;display:block" role="img" aria-label="Desde dónde se marcó cada gol"><rect class="pl2" x="-6" y="-6" width="${W+12}" height="${H+12}" rx="12"/><rect class="pln" x="0" y="0" width="${W}" height="${H}"/><rect class="pln" x="${W-W*.33}" y="${H*.21}" width="${W*.33}" height="${H*.58}"/><rect class="pln" x="${W-W*.11}" y="${H*.37}" width="${W*.11}" height="${H*.26}"/><path class="pln" d="M0 ${H*.35} A ${H*.15} ${H*.15} 0 0 1 0 ${H*.65}"/>${dots}</svg></div>`;
+  return `<div class="sec gmap"><h4>Mapa de goles <span><i class="ldot" style="--c:var(--accent)"></i>${esc(m.home.short)} <i class="ldot" style="--c:var(--c2)"></i>${esc(m.away.short)}</span></h4><svg viewBox="-6 -6 ${W+12} ${H+12}" style="width:100%;height:auto;border-radius:12px;display:block" role="img" aria-label="Desde dónde se marcó cada gol"><rect class="pl2" x="-6" y="-6" width="${W+12}" height="${H+12}" rx="12"/><rect class="pln" x="0" y="0" width="${W}" height="${H}"/><rect class="pln" x="${W-W*.33}" y="${H*.21}" width="${W*.33}" height="${H*.58}"/><rect class="pln" x="${W-W*.11}" y="${H*.37}" width="${W*.11}" height="${H*.26}"/><path class="pln" d="M0 ${H*.35} A ${H*.15} ${H*.15} 0 0 1 0 ${H*.65}"/>${dots}</svg></div>`;
 }
 const DEPTH=p=>{p=(p||'').toUpperCase();if(p==='G'||p==='GK')return 0;if(/^(CD|CB|LB|RB|LWB|RWB|D|SW)/.test(p))return 1;if(/^(DM|CDM)/.test(p))return 2;if(/^(CM|LM|RM|M)/.test(p))return 3;if(/^(AM|CAM)/.test(p))return 4;return 5};
 const LAT=p=>{p=(p||'').toUpperCase();if(/^(LB|LWB|LM|LW)/.test(p))return -2;if(/-L$/.test(p))return -1;if(/^(RB|RWB|RM|RW)/.test(p))return 2;if(/-R$/.test(p))return 1;return 0};
